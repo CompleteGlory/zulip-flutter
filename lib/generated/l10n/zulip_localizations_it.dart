@@ -68,10 +68,11 @@ class ZulipLocalizationsIt extends ZulipLocalizations {
   String get chooseAccountButtonAddAnAccount => 'Aggiungi un account';
 
   @override
-  String get navButtonAllChannels => 'All channels';
+  String get navButtonAllChannels =>
+      'Titolo per un pulsante di navigazione che apre la pagina \"Tutti i canali\".';
 
   @override
-  String get allChannelsPageTitle => 'All channels';
+  String get allChannelsPageTitle => 'Titolo per la pagina \"Tutti i canali\".';
 
   @override
   String get allChannelsEmptyPlaceholder =>
@@ -284,6 +285,10 @@ class ZulipLocalizationsIt extends ZulipLocalizations {
       'Impossibile recuperare l\'origine del messaggio.';
 
   @override
+  String get errorCouldNotAccessUploadedFileTitle =>
+      'Could not access uploaded file';
+
+  @override
   String get errorCopyingFailed => 'Copia non riuscita';
 
   @override
@@ -434,6 +439,17 @@ class ZulipLocalizationsIt extends ZulipLocalizations {
   @override
   String get errorBannerCannotPostInChannelLabel =>
       'Non hai l\'autorizzazione per postare su questo canale.';
+
+  @override
+  String get composeBoxBannerLabelUnsubscribedWhenCannotSend =>
+      'New messages will not appear automatically.';
+
+  @override
+  String get composeBoxBannerButtonRefresh =>
+      'Etichetta il testo per il pulsante \"Aggiorna\" nel banner della casella di composizione quando visualizzi un canale a cui non sei iscritto.';
+
+  @override
+  String get composeBoxBannerButtonSubscribe => 'Subscribe';
 
   @override
   String get composeBoxBannerLabelEditMessage => 'Modifica messaggio';
@@ -900,10 +916,12 @@ class ZulipLocalizationsIt extends ZulipLocalizations {
       'Error updating user status. Please try again.';
 
   @override
-  String get searchMessagesPageTitle => 'Search';
+  String get searchMessagesPageTitle =>
+      'Titolo della pagina per la visualizzazione del messaggio \"Cerca\".';
 
   @override
-  String get searchMessagesHintText => 'Search';
+  String get searchMessagesHintText =>
+      'Testo di suggerimento per il campo di testo di ricerca del messaggio.';
 
   @override
   String get searchMessagesClearButtonTooltip => 'Clear';

@@ -127,7 +127,7 @@ class ZulipLocalizationsPl extends ZulipLocalizations {
 
   @override
   String get unsubscribeConfirmationDialogMessageCannotResubscribe =>
-      'Once you leave this channel, you will not be able to rejoin.';
+      'Opuszczając ten kanał utracisz możliwość ponownego przyłączenia.';
 
   @override
   String get unsubscribeConfirmationDialogConfirmButton => 'Odsubskrybuj';
@@ -289,6 +289,10 @@ class ZulipLocalizationsPl extends ZulipLocalizations {
       'Nie można uzyskać źródłowej wiadomości.';
 
   @override
+  String get errorCouldNotAccessUploadedFileTitle =>
+      'Brak dostępu do załadowanego pliku';
+
+  @override
   String get errorCopyingFailed => 'Nie udało się skopiować';
 
   @override
@@ -438,6 +442,16 @@ class ZulipLocalizationsPl extends ZulipLocalizations {
       'Nie masz uprawnień do dodawania wpisów w tym kanale.';
 
   @override
+  String get composeBoxBannerLabelUnsubscribedWhenCannotSend =>
+      'Nowe wiadomości nie pojawią się z automatu.';
+
+  @override
+  String get composeBoxBannerButtonRefresh => 'Odśwież';
+
+  @override
+  String get composeBoxBannerButtonSubscribe => 'Subskrybuj';
+
+  @override
   String get composeBoxBannerLabelEditMessage => 'Zmień wiadomość';
 
   @override
@@ -514,7 +528,7 @@ class ZulipLocalizationsPl extends ZulipLocalizations {
   String get composeBoxGroupDmContentHint => 'Napisz do grupy';
 
   @override
-  String get composeBoxSelfDmContentHint => 'Zanotuj coś na przyszłość';
+  String get composeBoxSelfDmContentHint => 'Zostaw notatkę dla siebie';
 
   @override
   String composeBoxChannelContentHint(String destination) {

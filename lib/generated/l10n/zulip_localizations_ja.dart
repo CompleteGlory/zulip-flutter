@@ -273,6 +273,10 @@ class ZulipLocalizationsJa extends ZulipLocalizations {
   String get errorCouldNotFetchMessageSource => 'メッセージのソースを取得できませんでした。';
 
   @override
+  String get errorCouldNotAccessUploadedFileTitle =>
+      'Could not access uploaded file';
+
+  @override
   String get errorCopyingFailed => 'コピーに失敗しました';
 
   @override
@@ -414,6 +418,16 @@ class ZulipLocalizationsJa extends ZulipLocalizations {
 
   @override
   String get errorBannerCannotPostInChannelLabel => 'このチャンネルに投稿する権限がありません。';
+
+  @override
+  String get composeBoxBannerLabelUnsubscribedWhenCannotSend =>
+      'New messages will not appear automatically.';
+
+  @override
+  String get composeBoxBannerButtonRefresh => 'Refresh';
+
+  @override
+  String get composeBoxBannerButtonSubscribe => 'Subscribe';
 
   @override
   String get composeBoxBannerLabelEditMessage => 'メッセージを編集';

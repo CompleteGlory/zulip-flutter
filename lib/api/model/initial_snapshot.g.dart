@@ -63,6 +63,9 @@ InitialSnapshot _$InitialSnapshotFromJson(
   subscriptions: (json['subscriptions'] as List<dynamic>)
       .map((e) => Subscription.fromJson(e as Map<String, dynamic>))
       .toList(),
+  channelFolders: (json['channel_folders'] as List<dynamic>?)
+      ?.map((e) => ChannelFolder.fromJson(e as Map<String, dynamic>))
+      .toList(),
   unreadMsgs: UnreadMessagesSnapshot.fromJson(
     json['unread_msgs'] as Map<String, dynamic>,
   ),
@@ -78,8 +81,8 @@ InitialSnapshot _$InitialSnapshotFromJson(
   userSettings: UserSettings.fromJson(
     json['user_settings'] as Map<String, dynamic>,
   ),
-  userTopics: (json['user_topics'] as List<dynamic>?)
-      ?.map((e) => UserTopicItem.fromJson(e as Map<String, dynamic>))
+  userTopics: (json['user_topics'] as List<dynamic>)
+      .map((e) => UserTopicItem.fromJson(e as Map<String, dynamic>))
       .toList(),
   realmCanDeleteAnyMessageGroup:
       json['realm_can_delete_any_message_group'] == null
@@ -98,6 +101,7 @@ InitialSnapshot _$InitialSnapshotFromJson(
     json['realm_wildcard_mention_policy'],
   ),
   realmMandatoryTopics: json['realm_mandatory_topics'] as bool,
+  realmName: json['realm_name'] as String,
   realmWaitingPeriodThreshold: (json['realm_waiting_period_threshold'] as num)
       .toInt(),
   realmMessageContentDeleteLimitSeconds:
@@ -106,6 +110,7 @@ InitialSnapshot _$InitialSnapshotFromJson(
   realmMessageContentEditLimitSeconds:
       (json['realm_message_content_edit_limit_seconds'] as num?)?.toInt(),
   realmEnableReadReceipts: json['realm_enable_read_receipts'] as bool,
+  realmIconUrl: Uri.parse(json['realm_icon_url'] as String),
   realmPresenceDisabled: json['realm_presence_disabled'] as bool,
   realmDefaultExternalAccounts:
       (json['realm_default_external_accounts'] as Map<String, dynamic>).map(
@@ -115,9 +120,7 @@ InitialSnapshot _$InitialSnapshotFromJson(
         ),
       ),
   maxFileUploadSizeMib: (json['max_file_upload_size_mib'] as num).toInt(),
-  serverEmojiDataUrl: json['server_emoji_data_url'] == null
-      ? null
-      : Uri.parse(json['server_emoji_data_url'] as String),
+  serverEmojiDataUrl: Uri.parse(json['server_emoji_data_url'] as String),
   realmEmptyTopicDisplayName: json['realm_empty_topic_display_name'] as String?,
   realmUsers:
       (InitialSnapshot._readUsersIsActiveFallbackTrue(json, 'realm_users')
@@ -166,6 +169,7 @@ Map<String, dynamic> _$InitialSnapshotToJson(
   'recent_private_conversations': instance.recentPrivateConversations,
   'saved_snippets': instance.savedSnippets,
   'subscriptions': instance.subscriptions,
+  'channel_folders': instance.channelFolders,
   'unread_msgs': instance.unreadMsgs,
   'streams': instance.streams,
   'user_status': instance.userStatuses.map((k, e) => MapEntry(k.toString(), e)),
@@ -176,6 +180,7 @@ Map<String, dynamic> _$InitialSnapshotToJson(
   'realm_delete_own_message_policy': instance.realmDeleteOwnMessagePolicy,
   'realm_wildcard_mention_policy': instance.realmWildcardMentionPolicy,
   'realm_mandatory_topics': instance.realmMandatoryTopics,
+  'realm_name': instance.realmName,
   'realm_waiting_period_threshold': instance.realmWaitingPeriodThreshold,
   'realm_message_content_delete_limit_seconds':
       instance.realmMessageContentDeleteLimitSeconds,
@@ -183,10 +188,11 @@ Map<String, dynamic> _$InitialSnapshotToJson(
   'realm_message_content_edit_limit_seconds':
       instance.realmMessageContentEditLimitSeconds,
   'realm_enable_read_receipts': instance.realmEnableReadReceipts,
+  'realm_icon_url': instance.realmIconUrl.toString(),
   'realm_presence_disabled': instance.realmPresenceDisabled,
   'realm_default_external_accounts': instance.realmDefaultExternalAccounts,
   'max_file_upload_size_mib': instance.maxFileUploadSizeMib,
-  'server_emoji_data_url': instance.serverEmojiDataUrl?.toString(),
+  'server_emoji_data_url': instance.serverEmojiDataUrl.toString(),
   'realm_empty_topic_display_name': instance.realmEmptyTopicDisplayName,
   'realm_users': instance.realmUsers,
   'realm_non_active_users': instance.realmNonActiveUsers,
@@ -248,7 +254,7 @@ UserSettings _$UserSettingsFromJson(Map<String, dynamic> json) => UserSettings(
   twentyFourHourTime: TwentyFourHourTimeMode.fromApiValue(
     json['twenty_four_hour_time'] as bool?,
   ),
-  displayEmojiReactionUsers: json['display_emoji_reaction_users'] as bool?,
+  displayEmojiReactionUsers: json['display_emoji_reaction_users'] as bool,
   emojiset: $enumDecode(_$EmojisetEnumMap, json['emojiset']),
   presenceEnabled: json['presence_enabled'] as bool,
 );

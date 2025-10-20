@@ -100,6 +100,8 @@ mixin _DatabaseMixin on GlobalStore {
     return Account(
       id: accountId,
       realmUrl: data.realmUrl.value,
+      realmName: data.realmName.value,
+      realmIcon: data.realmIcon.value,
       userId: data.userId.value,
       email: data.email.value,
       apiKey: data.apiKey.value,
@@ -346,6 +348,10 @@ extension PerAccountStoreTestExtension on PerAccountStore {
 
   Future<void> removeSubscriptions(List<int> channelIds) async {
     await handleEvent(SubscriptionRemoveEvent(id: 1, streamIds: channelIds));
+  }
+
+  Future<void> addChannelFolder(ChannelFolder channelFolder) async {
+    await handleEvent(ChannelFolderAddEvent(id: 1, channelFolder: channelFolder));
   }
 
   Future<void> setUserTopic(ZulipStream stream, String topic, UserTopicVisibilityPolicy visibilityPolicy) async {

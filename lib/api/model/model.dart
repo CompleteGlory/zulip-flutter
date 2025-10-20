@@ -69,7 +69,7 @@ class CustomProfileField {
   final String name;
   final String hint;
   final String fieldData;
-  final bool? displayInProfileSummary; // TODO(server-6)
+  final bool? displayInProfileSummary;
 
   CustomProfileField({
     required this.id,
@@ -97,7 +97,7 @@ enum CustomProfileFieldType {
   link(apiValue: 5),
   user(apiValue: 6),
   externalAccount(apiValue: 7),
-  pronouns(apiValue: 8), // TODO(server-6) newly added
+  pronouns(apiValue: 8),
   unknown(apiValue: null);
 
   const CustomProfileFieldType({
@@ -257,7 +257,6 @@ class StatusEmoji {
 ///
 /// The absence of one of these means there is no change.
 class UserStatusChange {
-  // final Option<bool> away; // deprecated in server-6 (FL-148); ignore
   final Option<String?> text;
   final Option<StatusEmoji?> emoji;
 
@@ -644,6 +643,8 @@ class ZulipStream {
   final int dateCreated;
   int? firstMessageId;
 
+  int? folderId;
+
   bool inviteOnly;
   bool isWebPublic; // present since 2.1, according to /api/changelog
   bool historyPublicToSubscribers;
@@ -674,6 +675,7 @@ class ZulipStream {
     required this.historyPublicToSubscribers,
     required this.messageRetentionDays,
     required this.channelPostPolicy,
+    required this.folderId,
     required this.canAddSubscribersGroup,
     required this.canDeleteAnyMessageGroup,
     required this.canDeleteOwnMessageGroup,
@@ -697,6 +699,7 @@ class ZulipStream {
       historyPublicToSubscribers: subscription.historyPublicToSubscribers,
       messageRetentionDays: subscription.messageRetentionDays,
       channelPostPolicy: subscription.channelPostPolicy,
+      folderId: subscription.folderId,
       canAddSubscribersGroup: subscription.canAddSubscribersGroup,
       canDeleteAnyMessageGroup: subscription.canDeleteAnyMessageGroup,
       canDeleteOwnMessageGroup: subscription.canDeleteOwnMessageGroup,
@@ -733,6 +736,7 @@ enum ChannelPropertyName {
   messageRetentionDays,
   @JsonValue('stream_post_policy')
   channelPostPolicy,
+  folderId,
   canAddSubscribersGroup,
   canDeleteAnyMessageGroup,
   canDeleteOwnMessageGroup,
@@ -793,7 +797,6 @@ class Subscription extends ZulipStream {
 
   bool pinToTop;
   bool isMuted;
-  // final bool? inHomeView; // deprecated; ignore
 
   /// As an int that dart:ui's Color constructor will take:
   ///   <https://api.flutter.dev/flutter/dart-ui/Color/Color.html>
@@ -818,6 +821,7 @@ class Subscription extends ZulipStream {
     required super.historyPublicToSubscribers,
     required super.messageRetentionDays,
     required super.channelPostPolicy,
+    required super.folderId,
     required super.canAddSubscribersGroup,
     required super.canDeleteAnyMessageGroup,
     required super.canDeleteOwnMessageGroup,
@@ -839,6 +843,38 @@ class Subscription extends ZulipStream {
 
   @override
   Map<String, dynamic> toJson() => _$SubscriptionToJson(this);
+}
+
+/// As in `channel_folders` in the initial snapshot.
+///
+/// For docs, search for "channel_folders:"
+/// in <https://zulip.com/api/register-queue>.
+@JsonSerializable(fieldRename: FieldRename.snake)
+class ChannelFolder {
+  final int id;
+  String name;
+  int? order; // TODO(server-11); added in a later FL than the rest
+  final int? dateCreated;
+  final int? creatorId;
+  String description;
+  String renderedDescription;
+  bool isArchived;
+
+  ChannelFolder({
+    required this.id,
+    required this.name,
+    required this.order,
+    required this.dateCreated,
+    required this.creatorId,
+    required this.description,
+    required this.renderedDescription,
+    required this.isArchived,
+  });
+
+  factory ChannelFolder.fromJson(Map<String, dynamic> json) =>
+    _$ChannelFolderFromJson(json);
+
+  Map<String, dynamic> toJson() => _$ChannelFolderToJson(this);
 }
 
 @JsonEnum(fieldRename: FieldRename.snake, valueField: "apiValue")

@@ -278,6 +278,10 @@ class ZulipLocalizationsAr extends ZulipLocalizations {
       'Could not fetch message source.';
 
   @override
+  String get errorCouldNotAccessUploadedFileTitle =>
+      'Could not access uploaded file';
+
+  @override
   String get errorCopyingFailed => 'Copying failed';
 
   @override
@@ -426,6 +430,16 @@ class ZulipLocalizationsAr extends ZulipLocalizations {
       'You do not have permission to post in this channel.';
 
   @override
+  String get composeBoxBannerLabelUnsubscribedWhenCannotSend =>
+      'New messages will not appear automatically.';
+
+  @override
+  String get composeBoxBannerButtonRefresh => 'Refresh';
+
+  @override
+  String get composeBoxBannerButtonSubscribe => 'Subscribe';
+
+  @override
   String get composeBoxBannerLabelEditMessage => 'Edit message';
 
   @override
@@ -501,7 +515,7 @@ class ZulipLocalizationsAr extends ZulipLocalizations {
   String get composeBoxGroupDmContentHint => 'Message group';
 
   @override
-  String get composeBoxSelfDmContentHint => 'Jot down something';
+  String get composeBoxSelfDmContentHint => 'Write yourself a note';
 
   @override
   String composeBoxChannelContentHint(String destination) {

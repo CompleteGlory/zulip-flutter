@@ -42,6 +42,9 @@ mixin ChannelStore on UserStore {
   /// and [streamsByName].
   Map<int, Subscription> get subscriptions;
 
+  /// All the channel folders, including archived ones, indexed by ID.
+  Map<int, ChannelFolder> get channelFolders;
+
   static int compareChannelsByName(ZulipStream a, ZulipStream b) {
     // A user gave feedback wanting zulip-flutter to match web in putting
     // emoji-prefixed channels first; see #1202.
@@ -59,6 +62,21 @@ mixin ChannelStore on UserStore {
   //    as invalid. See: https://github.com/dart-lang/sdk/issues/61246
   // ignore: valid_regexps
   static final _startsWithEmojiRegex = RegExp(r'^\p{Emoji}', unicode: true);
+
+  /// A compare function for [ChannelFolder]s, using [ChannelFolder.order].
+  ///
+  /// Channels without [ChannelFolder.order] will come first,
+  /// sorted alphabetically.
+  // TODO(server-11) Once [ChannelFolder.order] is required,
+  //   remove alphabetical sorting.
+  static int compareChannelFolders(ChannelFolder a, ChannelFolder b) {
+    return switch ((a.order, b.order)) {
+      (null,   null) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+      (null,  int()) => -1,
+      (int(),  null) => 1,
+      (int a, int b) => a.compareTo(b),
+    };
+  }
 
   /// The visibility policy that the self-user has for the given topic.
   ///
@@ -268,6 +286,9 @@ mixin ProxyChannelStore on ChannelStore {
   Map<int, Subscription> get subscriptions => channelStore.subscriptions;
 
   @override
+  Map<int, ChannelFolder> get channelFolders => channelStore.channelFolders;
+
+  @override
   UserTopicVisibilityPolicy topicVisibilityPolicy(int streamId, TopicName topic) =>
     channelStore.topicVisibilityPolicy(streamId, topic);
 
@@ -306,8 +327,11 @@ class ChannelStoreImpl extends HasUserStore with ChannelStore {
       streams.putIfAbsent(stream.streamId, () => stream);
     }
 
+    final channelFolders = Map.fromEntries((initialSnapshot.channelFolders ?? [])
+      .map((channelFolder) => MapEntry(channelFolder.id, channelFolder)));
+
     final topicVisibility = <int, TopicKeyedMap<UserTopicVisibilityPolicy>>{};
-    for (final item in initialSnapshot.userTopics ?? const <UserTopicItem>[]) {
+    for (final item in initialSnapshot.userTopics) {
       if (_warnInvalidVisibilityPolicy(item.visibilityPolicy)) {
         // Not a value we expect. Keep it out of our data structures. // TODO(log)
         continue;
@@ -321,6 +345,7 @@ class ChannelStoreImpl extends HasUserStore with ChannelStore {
       streams: streams,
       streamsByName: streams.map((_, stream) => MapEntry(stream.name, stream)),
       subscriptions: subscriptions,
+      channelFolders: channelFolders,
       topicVisibility: topicVisibility,
     );
   }
@@ -330,6 +355,7 @@ class ChannelStoreImpl extends HasUserStore with ChannelStore {
     required this.streams,
     required this.streamsByName,
     required this.subscriptions,
+    required this.channelFolders,
     required this.topicVisibility,
   });
 
@@ -339,6 +365,8 @@ class ChannelStoreImpl extends HasUserStore with ChannelStore {
   final Map<String, ZulipStream> streamsByName;
   @override
   final Map<int, Subscription> subscriptions;
+  @override
+  final Map<int, ChannelFolder> channelFolders;
 
   @override
   Map<int, TopicKeyedMap<UserTopicVisibilityPolicy>> get debugTopicVisibility => topicVisibility;
@@ -418,6 +446,8 @@ class ChannelStoreImpl extends HasUserStore with ChannelStore {
             stream.messageRetentionDays = event.value as int?;
           case ChannelPropertyName.channelPostPolicy:
             stream.channelPostPolicy = event.value as ChannelPostPolicy;
+          case ChannelPropertyName.folderId:
+            stream.folderId = event.value as int?;
           case ChannelPropertyName.canAddSubscribersGroup:
             stream.canAddSubscribersGroup = event.value as GroupSettingValue;
           case ChannelPropertyName.canDeleteAnyMessageGroup:
@@ -473,8 +503,6 @@ class ChannelStoreImpl extends HasUserStore with ChannelStore {
           case SubscriptionProperty.isMuted:
             // TODO(#1255) update [MessageListView] if affected
             subscription.isMuted                = event.value as bool;
-          case SubscriptionProperty.inHomeView:
-            subscription.isMuted                = !(event.value as bool);
           case SubscriptionProperty.pinToTop:
             subscription.pinToTop               = event.value as bool;
           case SubscriptionProperty.desktopNotifications:
@@ -495,6 +523,33 @@ class ChannelStoreImpl extends HasUserStore with ChannelStore {
       case SubscriptionPeerAddEvent():
       case SubscriptionPeerRemoveEvent():
         // We don't currently store the data these would update; that's #374.
+    }
+  }
+
+  void handleChannelFolderEvent(ChannelFolderEvent event) {
+    switch (event) {
+      case ChannelFolderAddEvent():
+        final newChannelFolder = event.channelFolder;
+        channelFolders[newChannelFolder.id] = newChannelFolder;
+
+      case ChannelFolderUpdateEvent():
+        final change = event.data;
+        final channelFolder = channelFolders[event.channelFolderId];
+        if (channelFolder == null) return; // TODO(log)
+
+        if (change.name != null)                channelFolder.name = change.name!;
+        if (change.description != null)         channelFolder.description = change.description!;
+        if (change.renderedDescription != null) channelFolder.renderedDescription = change.renderedDescription!;
+        if (change.isArchived != null)          channelFolder.isArchived = change.isArchived!;
+
+      case ChannelFolderReorderEvent():
+        final order = event.order;
+        for (int i = 0; i < order.length; i++) {
+          final id = order[i];
+          final channelFolder = channelFolders[id];
+          if (channelFolder == null) continue; // TODO(log)
+          channelFolder.order = i;
+        }
     }
   }
 

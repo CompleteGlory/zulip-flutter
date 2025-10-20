@@ -35,8 +35,6 @@ class InitialSnapshot {
   @JsonKey(defaultValue: 10000)
   final int serverTypingStartedWaitPeriodMilliseconds;
 
-  // final List<…> mutedTopics; // TODO(#422) we ignore this feature on older servers
-
   final List<MutedUserItem> mutedUsers;
 
   // In the modern format because we pass `slim_presence`.
@@ -54,6 +52,8 @@ class InitialSnapshot {
 
   final List<Subscription> subscriptions;
 
+  final List<ChannelFolder>? channelFolders; // TODO(server-11)
+
   final UnreadMessagesSnapshot unreadMsgs;
 
   final List<ZulipStream> streams;
@@ -70,7 +70,7 @@ class InitialSnapshot {
 
   final UserSettings userSettings;
 
-  final List<UserTopicItem>? userTopics; // TODO(server-6)
+  final List<UserTopicItem> userTopics;
 
   final GroupSettingValue? realmCanDeleteAnyMessageGroup; // TODO(server-10)
 
@@ -90,6 +90,8 @@ class InitialSnapshot {
 
   final bool realmMandatoryTopics;
 
+  final String realmName;
+
   /// The number of days until a user's account is treated as a full member.
   ///
   /// Search for "realm_waiting_period_threshold" in https://zulip.com/api/register-queue.
@@ -105,13 +107,15 @@ class InitialSnapshot {
 
   final bool realmEnableReadReceipts;
 
+  final Uri realmIconUrl;
+
   final bool realmPresenceDisabled;
 
   final Map<String, RealmDefaultExternalAccount> realmDefaultExternalAccounts;
 
   final int maxFileUploadSizeMib;
 
-  final Uri? serverEmojiDataUrl; // TODO(server-6)
+  final Uri serverEmojiDataUrl;
 
   final String? realmEmptyTopicDisplayName; // TODO(server-10)
 
@@ -166,6 +170,7 @@ class InitialSnapshot {
     required this.recentPrivateConversations,
     required this.savedSnippets,
     required this.subscriptions,
+    required this.channelFolders,
     required this.unreadMsgs,
     required this.streams,
     required this.userStatuses,
@@ -176,11 +181,13 @@ class InitialSnapshot {
     required this.realmDeleteOwnMessagePolicy,
     required this.realmWildcardMentionPolicy,
     required this.realmMandatoryTopics,
+    required this.realmName,
     required this.realmWaitingPeriodThreshold,
     required this.realmMessageContentDeleteLimitSeconds,
     required this.realmAllowMessageEditing,
     required this.realmMessageContentEditLimitSeconds,
     required this.realmEnableReadReceipts,
+    required this.realmIconUrl,
     required this.realmPresenceDisabled,
     required this.realmDefaultExternalAccounts,
     required this.maxFileUploadSizeMib,
@@ -284,7 +291,7 @@ class UserSettings {
   )
   TwentyFourHourTimeMode twentyFourHourTime;
 
-  bool? displayEmojiReactionUsers; // TODO(server-6)
+  bool displayEmojiReactionUsers;
   Emojiset emojiset;
   bool presenceEnabled;
 

@@ -323,6 +323,28 @@ abstract class GlobalStore extends ChangeNotifier {
       zulipFeatureLevel: Value(data.zulipFeatureLevel)));
   }
 
+  /// Update an account with [realmName] and [realmIcon], returning the new version.
+  ///
+  /// The account must already exist in the store.
+  Future<Account> updateRealmData(int accountId, {
+    required String realmName,
+    required Uri realmIcon,
+  }) async {
+    final account = getAccount(accountId)!;
+    if (account.realmName == realmName && account.realmIcon == realmIcon) {
+      return account;
+    }
+
+    return updateAccount(accountId,  AccountsCompanion(
+      realmName: account.realmName != realmName
+        ? Value(realmName)
+        : const Value.absent(),
+      realmIcon: account.realmIcon != realmIcon
+        ? Value(realmIcon)
+        : const Value.absent(),
+    ));
+  }
+
   /// Update an account in the underlying data store.
   Future<void> doUpdateAccount(int accountId, AccountsCompanion data);
 
@@ -400,6 +422,10 @@ abstract class PerAccountStoreBase {
 
   /// Always equal to `account.realmUrl` and `connection.realmUrl`.
   Uri get realmUrl => connection.realmUrl;
+
+  String? get realmName => account.realmName;
+
+  Uri? get realmIcon => account.realmIcon;
 
   /// Resolve [reference] as a URL relative to [realmUrl].
   ///
@@ -803,6 +829,11 @@ class PerAccountStore extends PerAccountStoreBase with
         _channels.handleSubscriptionEvent(event);
         notifyListeners();
 
+      case ChannelFolderEvent():
+        assert(debugLog("server event: channel_folder/${event.op}"));
+        _channels.handleChannelFolderEvent(event);
+        break;
+
       case UserStatusEvent():
         assert(debugLog("server event: user_status"));
         _users.handleUserStatusEvent(event);
@@ -1108,6 +1139,11 @@ class UpdateMachine {
       connection.zulipFeatureLevel = zulipVersionData.zulipFeatureLevel;
     }
 
+    // TODO(#668) update realmName and realmIcon on realm update events
+    await globalStore.updateRealmData(accountId,
+      realmName: initialSnapshot.realmName,
+      realmIcon: initialSnapshot.realmIconUrl);
+
     final store = PerAccountStore.fromInitialSnapshot(
       globalStore: globalStore,
       accountId: accountId,
@@ -1117,12 +1153,7 @@ class UpdateMachine {
     final updateMachine = UpdateMachine.fromInitialSnapshot(
       store: store, initialSnapshot: initialSnapshot);
     updateMachine.poll();
-    if (initialSnapshot.serverEmojiDataUrl != null) {
-      // TODO(server-6): If the server is ancient, just skip trying to have
-      //   a list of its emoji.  (The old servers that don't provide
-      //   serverEmojiDataUrl are already unsupported at time of writing.)
-      unawaited(updateMachine.fetchEmojiData(initialSnapshot.serverEmojiDataUrl!));
-    }
+    unawaited(updateMachine.fetchEmojiData(initialSnapshot.serverEmojiDataUrl));
     store.presence.start();
     return updateMachine;
   }

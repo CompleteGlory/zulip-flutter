@@ -1,4 +1,5 @@
 import 'package:checks/checks.dart';
+import 'package:collection/collection.dart';
 import 'package:test/scaffolding.dart';
 import 'package:zulip/api/model/events.dart';
 import 'package:zulip/api/model/initial_snapshot.dart';
@@ -91,6 +92,21 @@ void main() {
     });
   });
 
+  group('channelFolderComparator', () {
+    final folder1 = eg.channelFolder(id: 1, order: null, name: 'M');
+    final folder2 = eg.channelFolder(id: 2, order: null, name: 'n');
+    final folder3 = eg.channelFolder(id: 3, order: 2, name: 'a');
+    final folder4 = eg.channelFolder(id: 4, order: 0, name: 'b');
+    final folder5 = eg.channelFolder(id: 5, order: 1, name: 'c');
+
+    final store = eg.store(initialSnapshot: eg.initialSnapshot(
+      channelFolders: [folder1, folder2, folder3, folder4, folder5]));
+
+    final sorted = store.channelFolders.values.toList()
+      .sorted(ChannelStore.compareChannelFolders);
+    check(sorted).deepEquals([folder1, folder2, folder4, folder5, folder3]);
+  });
+
   group('SubscriptionEvent', () {
     final stream = eg.stream();
 
@@ -121,19 +137,87 @@ void main() {
         value: true));
       check(store.subscriptions[stream.streamId]!.isMuted).isTrue();
     });
+  });
 
-    test('SubscriptionProperty.inHomeView updates isMuted instead', () async {
-      final store = eg.store(initialSnapshot: eg.initialSnapshot(
-        streams: [stream],
-        subscriptions: [eg.subscription(stream, isMuted: false)],
+  group('ChannelFolderEvent', () {
+    group('add', () {
+      test('smoke', () async {
+        final folder1 = eg.channelFolder(id: 1);
+        final folder2 = eg.channelFolder(id: 2);
+        final store = eg.store(initialSnapshot: eg.initialSnapshot(
+          channelFolders: [folder1]));
+
+        await store.handleEvent(ChannelFolderAddEvent(
+          id: 1, channelFolder: folder2));
+        check(store.channelFolders).deepEquals({1: folder1, 2: folder2});
+      });
+    });
+
+    group('update', () {
+      void doTest(ChannelFolderChange change) {
+        final ChannelFolderChange(
+          :name, :description, :renderedDescription, :isArchived) = change;
+        final testDescription = [
+          if (name != null)                'name: $name',
+          if (description != null)         'description: $description',
+          if (renderedDescription != null) 'renderedDescription: $renderedDescription',
+          if (isArchived != null)          'isArchived: $isArchived',
+        ].join(', ');
+        test(testDescription, () async {
+          final channelFolder = eg.channelFolder();
+          assert(name == null || name != channelFolder.name);
+          assert(description == null || description != channelFolder.description);
+          assert(renderedDescription == null || renderedDescription != channelFolder.renderedDescription);
+          assert(isArchived == null || isArchived != channelFolder.isArchived);
+
+          final store = eg.store(initialSnapshot: eg.initialSnapshot(
+            channelFolders: [channelFolder]));
+          await store.handleEvent(ChannelFolderUpdateEvent(id: 1,
+            channelFolderId: channelFolder.id, data: change));
+          check(store.channelFolders.values.single)
+            ..name.equals(name ?? channelFolder.name)
+            ..description.equals(description ?? channelFolder.description)
+            ..renderedDescription.equals(renderedDescription ?? channelFolder.renderedDescription)
+            ..isArchived.equals(isArchived ?? channelFolder.isArchived);
+        });
+      }
+
+      doTest(eg.channelFolderChange(name: 'new name'));
+      doTest(eg.channelFolderChange(description: 'new description'));
+      doTest(eg.channelFolderChange(renderedDescription: '<p>new description</p>'));
+      doTest(eg.channelFolderChange(isArchived: true));
+
+      doTest(eg.channelFolderChange(
+        name: 'new name',
+        description: 'new description',
+        renderedDescription: '<p>new description</p>',
+        isArchived: true,
       ));
-      check(store.subscriptions[stream.streamId]!.isMuted).isFalse();
+    });
 
-      await store.handleEvent(SubscriptionUpdateEvent(id: 1,
-        streamId: stream.streamId,
-        property: SubscriptionProperty.inHomeView,
-        value: false));
-      check(store.subscriptions[stream.streamId]!.isMuted).isTrue();
+    group('reorder', () {
+      List<ChannelFolder> foldersFromStoreInOrder(PerAccountStore store) {
+        return store.channelFolders.values.toList()
+          ..sort((a, b) => a.order!.compareTo(b.order!));
+      }
+
+      test('smoke', () async {
+        final folderA = eg.channelFolder(order: 0);
+        final folderB = eg.channelFolder(order: 1);
+        final folderC = eg.channelFolder(order: 2);
+
+        final store = eg.store(initialSnapshot: eg.initialSnapshot(
+          channelFolders: [folderA, folderB, folderC]));
+        check(foldersFromStoreInOrder(store)).deepEquals([folderA, folderB, folderC]);
+
+        await store.handleEvent(ChannelFolderReorderEvent(id: 1,
+          order: [folderA.id, folderC.id, folderB.id]));
+        check(foldersFromStoreInOrder(store)).deepEquals([folderA, folderC, folderB]);
+
+        await store.handleEvent(ChannelFolderReorderEvent(id: 1,
+          order: [folderC.id, folderB.id, folderA.id]));
+        check(foldersFromStoreInOrder(store)).deepEquals([folderC, folderB, folderA]);
+      });
     });
   });
 

@@ -140,7 +140,7 @@
   "@unsubscribeConfirmationDialogTitle": {
     "description": "Title for a confirmation dialog for unsubscribing from a channel.",
     "placeholders": {
-      "channelName": {"type": "String", "example": "mobile"}
+      "channelName": {"type": "String", "example": "#mobile"}
     }
   },
   "unsubscribeConfirmationDialogMessageCannotResubscribe": "Once you leave this channel, you will not be able to rejoin.",
@@ -329,6 +329,10 @@
   "@errorCouldNotFetchMessageSource": {
     "description": "Error message when the source of a message could not be fetched."
   },
+  "errorCouldNotAccessUploadedFileTitle": "Could not access uploaded file",
+  "@errorCouldNotAccessUploadedFileTitle": {
+    "description": "Error title on failure in opening a file someone previously uploaded to Zulip"
+  },
   "errorCopyingFailed": "Copying failed",
   "@errorCopyingFailed": {
     "description": "Error message when copying the text of a message to the user's system clipboard failed."
@@ -502,6 +506,18 @@
   "@errorBannerCannotPostInChannelLabel": {
     "description": "Error-banner text replacing the compose box when you do not have permission to send a message to the channel."
   },
+  "composeBoxBannerLabelUnsubscribedWhenCannotSend": "New messages will not appear automatically.",
+  "@composeBoxBannerLabelUnsubscribedWhenCannotSend": {
+    "description": "Label text for a compose-box banner when you are viewing an unsubscribed channel in which you do not have permission to send messages."
+  },
+  "composeBoxBannerButtonRefresh": "Refresh",
+  "@composeBoxBannerButtonRefresh": {
+    "description": "Label text for the 'Refresh' button in the compose-box banner when you are viewing an unsubscribed channel."
+  },
+  "composeBoxBannerButtonSubscribe": "Subscribe",
+  "@composeBoxBannerButtonSubscribe": {
+    "description": "Label text for the 'Subscribe' button in the compose-box banner when you are viewing an unsubscribed channel."
+  },
   "composeBoxBannerLabelEditMessage": "Edit message",
   "@composeBoxBannerLabelEditMessage": {
     "description": "Label text for the compose-box banner when you are editing a message."
@@ -597,7 +613,7 @@
   "@composeBoxGroupDmContentHint": {
     "description": "Hint text for content input when sending a message to a group."
   },
-  "composeBoxSelfDmContentHint": "Jot down something",
+  "composeBoxSelfDmContentHint": "Write yourself a note",
   "@composeBoxSelfDmContentHint": {
     "description": "Hint text for content input when sending a message to yourself."
   },

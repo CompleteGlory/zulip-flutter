@@ -279,6 +279,10 @@ class ZulipLocalizationsSk extends ZulipLocalizations {
       'Nepodarilo sa nahrať zdroj správy';
 
   @override
+  String get errorCouldNotAccessUploadedFileTitle =>
+      'Could not access uploaded file';
+
+  @override
   String get errorCopyingFailed => 'Kopírovanie zlyhalo';
 
   @override
@@ -426,6 +430,16 @@ class ZulipLocalizationsSk extends ZulipLocalizations {
       'You do not have permission to post in this channel.';
 
   @override
+  String get composeBoxBannerLabelUnsubscribedWhenCannotSend =>
+      'New messages will not appear automatically.';
+
+  @override
+  String get composeBoxBannerButtonRefresh => 'Refresh';
+
+  @override
+  String get composeBoxBannerButtonSubscribe => 'Subscribe';
+
+  @override
   String get composeBoxBannerLabelEditMessage => 'Edit message';
 
   @override
@@ -501,7 +515,7 @@ class ZulipLocalizationsSk extends ZulipLocalizations {
   String get composeBoxGroupDmContentHint => 'Message group';
 
   @override
-  String get composeBoxSelfDmContentHint => 'Jot down something';
+  String get composeBoxSelfDmContentHint => 'Write yourself a note';
 
   @override
   String composeBoxChannelContentHint(String destination) {

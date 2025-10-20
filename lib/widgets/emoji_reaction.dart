@@ -130,7 +130,7 @@ class ReactionChipsList extends StatelessWidget {
   Widget build(BuildContext context) {
     final zulipLocalizations = ZulipLocalizations.of(context);
     final store = PerAccountStoreWidget.of(context);
-    final displayEmojiReactionUsers = store.userSettings.displayEmojiReactionUsers ?? false;
+    final displayEmojiReactionUsers = store.userSettings.displayEmojiReactionUsers;
     final showNames = displayEmojiReactionUsers && reactions.total <= 3;
 
     Widget result = Wrap(spacing: 4, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center,
@@ -804,10 +804,9 @@ class ViewReactionsHeader extends StatelessWidget {
     final reactions = message?.reactions;
 
     if (reactions == null || reactions.aggregated.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 8),
-        child: BottomSheetHeader(message: zulipLocalizations.seeWhoReactedSheetNoReactions),
-      );
+      return BottomSheetHeader(
+        outerVerticalPadding: true,
+        message: zulipLocalizations.seeWhoReactedSheetNoReactions);
     }
 
     return Padding(
