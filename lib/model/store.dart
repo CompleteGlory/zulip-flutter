@@ -323,6 +323,28 @@ abstract class GlobalStore extends ChangeNotifier {
       zulipFeatureLevel: Value(data.zulipFeatureLevel)));
   }
 
+  /// Update an account with [realmName] and [realmIcon], returning the new version.
+  ///
+  /// The account must already exist in the store.
+  Future<Account> updateRealmData(int accountId, {
+    required String realmName,
+    required Uri realmIcon,
+  }) async {
+    final account = getAccount(accountId)!;
+    if (account.realmName == realmName && account.realmIcon == realmIcon) {
+      return account;
+    }
+
+    return updateAccount(accountId,  AccountsCompanion(
+      realmName: account.realmName != realmName
+        ? Value(realmName)
+        : const Value.absent(),
+      realmIcon: account.realmIcon != realmIcon
+        ? Value(realmIcon)
+        : const Value.absent(),
+    ));
+  }
+
   /// Update an account in the underlying data store.
   Future<void> doUpdateAccount(int accountId, AccountsCompanion data);
 
@@ -400,6 +422,10 @@ abstract class PerAccountStoreBase {
 
   /// Always equal to `account.realmUrl` and `connection.realmUrl`.
   Uri get realmUrl => connection.realmUrl;
+
+  String? get realmName => account.realmName;
+
+  Uri? get realmIcon => account.realmIcon;
 
   /// Resolve [reference] as a URL relative to [realmUrl].
   ///
@@ -795,13 +821,24 @@ class PerAccountStore extends PerAccountStoreBase with
 
       case ChannelEvent():
         assert(debugLog("server event: stream/${event.op}"));
+        if (event is ChannelDeleteEvent) {
+          _messages.handleChannelDeleteEvent(event);
+        }
         _channels.handleChannelEvent(event);
         notifyListeners();
 
       case SubscriptionEvent():
         assert(debugLog("server event: subscription/${event.op}"));
+        if (event is SubscriptionRemoveEvent) {
+          _messages.handleSubscriptionRemoveEvent(event);
+        }
         _channels.handleSubscriptionEvent(event);
         notifyListeners();
+
+      case ChannelFolderEvent():
+        assert(debugLog("server event: channel_folder/${event.op}"));
+        _channels.handleChannelFolderEvent(event);
+        break;
 
       case UserStatusEvent():
         assert(debugLog("server event: user_status"));
@@ -1108,6 +1145,11 @@ class UpdateMachine {
       connection.zulipFeatureLevel = zulipVersionData.zulipFeatureLevel;
     }
 
+    // TODO(#668) update realmName and realmIcon on realm update events
+    await globalStore.updateRealmData(accountId,
+      realmName: initialSnapshot.realmName,
+      realmIcon: initialSnapshot.realmIconUrl);
+
     final store = PerAccountStore.fromInitialSnapshot(
       globalStore: globalStore,
       accountId: accountId,
@@ -1117,12 +1159,7 @@ class UpdateMachine {
     final updateMachine = UpdateMachine.fromInitialSnapshot(
       store: store, initialSnapshot: initialSnapshot);
     updateMachine.poll();
-    if (initialSnapshot.serverEmojiDataUrl != null) {
-      // TODO(server-6): If the server is ancient, just skip trying to have
-      //   a list of its emoji.  (The old servers that don't provide
-      //   serverEmojiDataUrl are already unsupported at time of writing.)
-      unawaited(updateMachine.fetchEmojiData(initialSnapshot.serverEmojiDataUrl!));
-    }
+    unawaited(updateMachine.fetchEmojiData(initialSnapshot.serverEmojiDataUrl));
     store.presence.start();
     return updateMachine;
   }
@@ -1144,7 +1181,7 @@ class UpdateMachine {
       InitialSnapshot? result;
       try {
         result = await registerQueue(connection);
-      } catch (e, s) {
+      } catch (e, stackTrace) {
         stopAndThrowIfNoAccount();
         // TODO(#890): tell user if initial-fetch errors persist, or look non-transient
         final ZulipVersionData? zulipVersionData;
@@ -1161,7 +1198,20 @@ class UpdateMachine {
             assert(debugLog('Error fetching initial snapshot: $e'));
             // Print stack trace in its own log entry; log entries are truncated
             // at 1 kiB (at least on Android), and stack can be longer than that.
-            assert(debugLog('Stack:\n$s'));
+            assert(debugLog('Stack:\n$stackTrace'));
+            if (e case NetworkException(cause: SocketException())) {
+              // A [SocketException] is common when the device is asleep.
+            } else {
+              // TODO: When the error seems transient, do keep retrying but
+              //   don't spam this feedback.
+              // TODO(#1948) Break the retry loop on non-transient errors.
+              _reportConnectionErrorToUserAndPromiseRetry(e,
+                realmUrl: connection.realmUrl,
+                // The stack trace is mostly useful for
+                // `MalformedServerResponseException`s, and will be noise for
+                // routine exceptions like from network problems.
+                stackTrace: e is ApiRequestException ? null : stackTrace);
+            }
         }
         assert(debugLog('Backing off, then will retry…'));
         await (backoffMachine ??= BackoffMachine()).wait();
@@ -1308,9 +1358,9 @@ class UpdateMachine {
           lastEventId = events.last.id;
         }
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (_disposed) return;
-      await _handlePollError(e);
+      await _handlePollError(e, stackTrace);
       assert(_disposed);
       return;
     }
@@ -1427,7 +1477,7 @@ class UpdateMachine {
   /// See also:
   ///  * [_handlePollRequestError], which handles certain errors
   ///    and causes them not to reach this method.
-  Future<void> _handlePollError(Object error) async {
+  Future<void> _handlePollError(Object error, StackTrace stackTrace) async {
     // An error occurred, other than the transient request errors we retry on.
     // This means either a lost/expired event queue on the server (which is
     // normal after the app is offline for a period like 10 minutes),
@@ -1462,9 +1512,14 @@ class UpdateMachine {
         isUnexpected = true;
 
       default:
-        assert(debugLog('BUG: Unexpected error in event polling: $error\n' // TODO(log)
-          'Replacing event queue…'));
-        _reportToUserErrorConnectingToServer(error);
+        assert(debugLog('BUG: Unexpected error in event polling: $error')); // TODO(log)
+        // Print stack trace in its own log entry; log entries are truncated
+        // at 1 kiB (at least on Android), and stack can be longer than that.
+        assert(debugLog('Stack trace:\n$stackTrace'));
+        assert(debugLog('Replacing event queue…'));
+        _reportConnectionErrorToUserAndPromiseRetry(error,
+          realmUrl: store.realmUrl,
+          stackTrace: stackTrace);
         // Similar story to the _EventHandlingException case;
         // separate only so that that other case can print more context.
         // The bug here could be in the server if it's an ApiRequestException,
@@ -1495,16 +1550,28 @@ class UpdateMachine {
   void _maybeReportToUserTransientError(Object error) {
     _accumulatedTransientFailureCount++;
     if (_accumulatedTransientFailureCount > transientFailureCountNotifyThreshold) {
-      _reportToUserErrorConnectingToServer(error);
+      _reportConnectionErrorToUserAndPromiseRetry(error, realmUrl: store.realmUrl);
     }
   }
 
-  void _reportToUserErrorConnectingToServer(Object error) {
+  /// Give brief UI feedback that we failed to connect to the server
+  /// and that we'll try again.
+  static void _reportConnectionErrorToUserAndPromiseRetry(
+    Object error, {
+    StackTrace? stackTrace,
+    required Uri realmUrl,
+  }) {
     final zulipLocalizations = GlobalLocalizations.zulipLocalizations;
+
+    final details = StringBuffer()..write(error.toString());
+    if (stackTrace != null) {
+      details.write('\nStack:\n$stackTrace');
+    }
+
     reportErrorToUserBriefly(
       zulipLocalizations.errorConnectingToServerShort,
       details: zulipLocalizations.errorConnectingToServerDetails(
-        store.realmUrl.toString(), error.toString()));
+        realmUrl.toString(), details.toString()));
   }
 
   /// Cleans up resources and tells the instance not to make new API requests.

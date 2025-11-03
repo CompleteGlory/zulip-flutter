@@ -107,9 +107,6 @@
   "@actionSheetReadReceiptsZeroReadCount": {
     "description": "Label in the \"Read receipts\" bottom sheet when no one has read the message."
   },
-  "@allChannelsEmptyPlaceholder": {
-    "description": "Centered text on the 'All channels' page saying that there is no content to show."
-  },
   "@allChannelsPageTitle": {
     "description": "Title for the 'All channels' page."
   },
@@ -118,18 +115,6 @@
   },
   "@channelFeedButtonTooltip": {
     "description": "Tooltip for button to navigate to a given channel's feed"
-  },
-  "@channelsEmptyPlaceholder": {
-    "description": "Centered text on the 'Channels' page saying that there is no content to show."
-  },
-  "@channelsEmptyPlaceholderWithAllChannelsLink": {
-    "description": "Centered text on the 'Channels' page saying that there is no content to show, with a link to 'All channels'.",
-    "placeholders": {
-      "allChannelsPageTitle": {
-        "example": "All channels",
-        "type": "String"
-      }
-    }
   },
   "@channelsPageTitle": {
     "description": "Title for the page with a list of subscribed channels."
@@ -158,11 +143,20 @@
   "@composeBoxBannerButtonCancel": {
     "description": "Label text for the 'Cancel' button in the compose-box banner when you are editing a message."
   },
+  "@composeBoxBannerButtonRefresh": {
+    "description": "Label text for the 'Refresh' button in the compose-box banner when you are viewing an unsubscribed channel."
+  },
   "@composeBoxBannerButtonSave": {
     "description": "Label text for the 'Save' button in the compose-box banner when you are editing a message."
   },
+  "@composeBoxBannerButtonSubscribe": {
+    "description": "Label text for the 'Subscribe' button in the compose-box banner when you are viewing an unsubscribed channel."
+  },
   "@composeBoxBannerLabelEditMessage": {
     "description": "Label text for the compose-box banner when you are editing a message."
+  },
+  "@composeBoxBannerLabelUnsubscribedWhenCannotSend": {
+    "description": "Label text for a compose-box banner when you are viewing an unsubscribed channel in which you do not have permission to send messages."
   },
   "@composeBoxChannelContentHint": {
     "description": "Hint text for content input when sending a message to a channel.",
@@ -342,6 +336,9 @@
   },
   "@errorCopyingFailed": {
     "description": "Error message when copying the text of a message to the user's system clipboard failed."
+  },
+  "@errorCouldNotAccessUploadedFileTitle": {
+    "description": "Error title on failure in opening a file someone previously uploaded to Zulip"
   },
   "@errorCouldNotConnectTitle": {
     "description": "Error title when the app could not connect to the server."
@@ -611,9 +608,6 @@
         "type": "String"
       }
     }
-  },
-  "@inboxEmptyPlaceholder": {
-    "description": "Centered text on the 'Inbox' page saying that there is no content to show."
   },
   "@inboxPageTitle": {
     "description": "Title for the page with unreads."
@@ -887,9 +881,6 @@
   "@reactionChipsLabel": {
     "description": "Text identifying the container of reaction chips on a message. (An accessibility label for assistive technology.)"
   },
-  "@recentDmConversationsEmptyPlaceholder": {
-    "description": "Centered text on the 'Direct messages' page saying that there is no content to show."
-  },
   "@recentDmConversationsPageTitle": {
     "description": "Title for the page with a list of DM conversations."
   },
@@ -1095,8 +1086,8 @@
   "@unsubscribeConfirmationDialogConfirmButton": {
     "description": "Label for the 'Unsubscribe' button on a confirmation dialog for unsubscribing from a channel."
   },
-  "@unsubscribeConfirmationDialogMessageMaybeCannotResubscribe": {
-    "description": "Message for a confirmation dialog for unsubscribing from a channel when you might not have permission to resubscribe."
+  "@unsubscribeConfirmationDialogMessageCannotResubscribe": {
+    "description": "Message for a confirmation dialog for unsubscribing from a channel when you will not have permission to resubscribe."
   },
   "@unsubscribeConfirmationDialogTitle": {
     "description": "Title for a confirmation dialog for unsubscribing from a channel.",
@@ -1279,12 +1270,9 @@
   "actionSheetReadReceiptsErrorReadCount": "Ładowanie potwierdzeń odczytu bez powodzenia.",
   "actionSheetReadReceiptsReadCount": "{count, plural, =1{Ta wiadomość została <z-link>przeczytana</z-link> przez {count} osobę:} other{Ta wiadomość została <z-link>przeczytana</z-link> przez {count} osób:}}",
   "actionSheetReadReceiptsZeroReadCount": "Nikt jeszcze nie widział tej wiadomości.",
-  "allChannelsEmptyPlaceholder": "Brak kanałów, które możesz przeglądać w tej organizacji.",
   "allChannelsPageTitle": "Wszystkie kanały",
   "appVersionUnknownPlaceholder": "(…)",
   "channelFeedButtonTooltip": "Strumień kanału",
-  "channelsEmptyPlaceholder": "Nie śledzisz żadnego z kanałów.",
-  "channelsEmptyPlaceholderWithAllChannelsLink": "Nie śledzisz żadnego z kanałów. Sprawdź dostępne <z-link>{allChannelsPageTitle}</z-link> i dołącz do części z nich.",
   "channelsPageTitle": "Kanały",
   "chooseAccountButtonAddAnAccount": "Dodaj konto",
   "chooseAccountPageLogOutButton": "Wyloguj",
@@ -1294,15 +1282,18 @@
   "composeBoxAttachFromCameraTooltip": "Zrób zdjęcie",
   "composeBoxAttachMediaTooltip": "Dołącz obrazy lub wideo",
   "composeBoxBannerButtonCancel": "Anuluj",
+  "composeBoxBannerButtonRefresh": "Odśwież",
   "composeBoxBannerButtonSave": "Zapisz",
+  "composeBoxBannerButtonSubscribe": "Subskrybuj",
   "composeBoxBannerLabelEditMessage": "Zmień wiadomość",
+  "composeBoxBannerLabelUnsubscribedWhenCannotSend": "Nowe wiadomości nie pojawią się z automatu.",
   "composeBoxChannelContentHint": "Wiadomość do {destination}",
   "composeBoxDmContentHint": "Napisz do @{user}",
   "composeBoxEnterTopicOrSkipHintText": "Wpisz tytuł wątku (pomiń aby uzyskać “{defaultTopicName}”)",
   "composeBoxGenericContentHint": "Wpisz wiadomość",
   "composeBoxGroupDmContentHint": "Napisz do grupy",
   "composeBoxLoadingMessage": "(ładowanie wiadomości {messageId})",
-  "composeBoxSelfDmContentHint": "Zanotuj coś na przyszłość",
+  "composeBoxSelfDmContentHint": "Zostaw notatkę dla siebie",
   "composeBoxSendTooltip": "Wyślij",
   "composeBoxTopicHintText": "Wątek",
   "composeBoxUploadingFilename": "Przekazywanie {filename}…",
@@ -1337,6 +1328,7 @@
   "errorContentNotInsertedTitle": "Dodanie zawartości bez powodzenia",
   "errorContentToInsertIsEmpty": "Plik do dodania jest pusty lub nie ma do niego dostępu.",
   "errorCopyingFailed": "Nie udało się skopiować",
+  "errorCouldNotAccessUploadedFileTitle": "Brak dostępu do załadowanego pliku",
   "errorCouldNotConnectTitle": "Brak połączenia",
   "errorCouldNotEditMessageTitle": "Nie można zmienić wiadomości",
   "errorCouldNotFetchMessageSource": "Nie można uzyskać źródłowej wiadomości.",
@@ -1390,7 +1382,6 @@
   "experimentalFeatureSettingsPageTitle": "Funkcje eksperymentalne",
   "experimentalFeatureSettingsWarning": "W ten sposób aktywujesz funkcje, które są w fazie testów. Mogą one nie działać lub powodować problemy z tym co bez nich działa poprawnie.\n\nTo ustawienie przewidziane jest dla tych, którzy pracują nad ulepszeniem aplikacji Zulip.",
   "filenameAndSizeInMiB": "{filename}: {size} MiB",
-  "inboxEmptyPlaceholder": "Obecnie brak nowych wiadomości. Skorzystaj z przycisków u dołu ekranu aby przejść do widoku mieszanego lub listy kanałów.",
   "inboxPageTitle": "Odebrane",
   "initialAnchorSettingDescription": "Możesz wybrać czy bardziej odpowiada Ci odczyt nieprzeczytanych lub najnowszych wiadomości.",
   "initialAnchorSettingFirstUnreadAlways": "Pierwsza nieprzeczytana wiadomość",
@@ -1463,7 +1454,6 @@
   "reactionChipLabel": "{emojiName}: {votes}",
   "reactionChipVotesYouAndOthers": "{otherUsersCount, plural, =1{Ty i 1 inny} other{Ty i {otherUsersCount} innych}}",
   "reactionChipsLabel": "Reakcje",
-  "recentDmConversationsEmptyPlaceholder": "Brak wiadomości w archiwum! Może warto rozpocząć dyskusję?",
   "recentDmConversationsPageTitle": "Wiadomości bezpośrednie",
   "recentDmConversationsSectionHeader": "Wiadomości bezpośrednie",
   "revealButtonLabel": "Odsłoń wiadomość",
@@ -1517,7 +1507,7 @@
   "unknownUserName": "(nieznany użytkownik)",
   "unpinnedSubscriptionsLabel": "Odpięte",
   "unsubscribeConfirmationDialogConfirmButton": "Odsubskrybuj",
-  "unsubscribeConfirmationDialogMessageMaybeCannotResubscribe": "Po opuszczeniu kanału możesz utracić możliwość powrotu.",
+  "unsubscribeConfirmationDialogMessageCannotResubscribe": "Opuszczając ten kanał utracisz możliwość ponownego przyłączenia.",
   "unsubscribeConfirmationDialogTitle": "Odsubskrybować z {channelName}?",
   "unsubscribeFailedTitle": "Odsubskrybowanie bez powdzenia",
   "updateStatusErrorTitle": "Błąd aktualizacji stanu. Spróbuj ponownie.",
@@ -1529,7 +1519,7 @@
   "userActiveDaysAgo": "Aktywny {days, plural, =1{1 dzień} other{{days} dni}} temu",
   "userActiveHoursAgo": "Aktywny {hours, plural, =1{1 godzinę} other{{hours} godzin}} temu",
   "userActiveMinutesAgo": "Aktywny {minutes, plural, =1{1 minutę} other{{minutes} minut}} temu",
-  "userActiveNow": "Dostępny",
+  "userActiveNow": "Teraz dostępny",
   "userActiveYesterday": "Aktywny wczoraj",
   "userIdle": "Bezczynny",
   "userNotActiveInYear": "Brak aktywności za ostatni rok",

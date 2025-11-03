@@ -63,7 +63,14 @@ Widget? _adaptiveContent(Widget? content) {
     case TargetPlatform.macOS:
       // A [SingleChildScrollView] (wrapping both title and content) is already
       // created by [CupertinoAlertDialog].
-      return content;
+      return DefaultTextStyle.merge(
+        // The "alert description" is start-aligned in one example in Apple's
+        // HIG document:
+        //   https://developer.apple.com/design/human-interface-guidelines/alerts#Anatomy
+        // (Confusingly, in 2025-10, it's center-aligned in the graphic at the
+        // *top* of that page; shrug.)
+        textAlign: TextAlign.start,
+        child: content);
   }
 }
 
@@ -145,7 +152,7 @@ DialogStatus<void> showErrorDialog({
 DialogStatus<bool> showSuggestedActionDialog({
   required BuildContext context,
   required String title,
-  required String message,
+  String? message,
   required String? actionButtonText,
   bool destructiveActionButton = false,
 }) {
@@ -154,7 +161,7 @@ DialogStatus<bool> showSuggestedActionDialog({
     context: context,
     builder: (BuildContext context) => AlertDialog.adaptive(
       title: Text(title),
-      content: _adaptiveContent(Text(message)),
+      content: message != null ? _adaptiveContent(Text(message)) : null,
       actions: [
         _adaptiveAction(
           onPressed: () => Navigator.pop<bool>(context, null),

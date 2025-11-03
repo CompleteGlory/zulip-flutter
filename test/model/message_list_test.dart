@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -427,6 +428,64 @@ void main() {
     });
   });
 
+  group('renarrowAndFetch', () {
+    test('smoke', () => awaitFakeAsync((async) async {
+      final channel = eg.stream();
+
+      const narrow = CombinedFeedNarrow();
+      await prepare(narrow: narrow, stream: channel);
+      final messages = List.generate(100,
+        (i) => eg.streamMessage(id: 1000 + i, stream: channel));
+      await prepareMessages(foundOldest: false, messages: messages);
+
+      // Start a fetchOlder, so we can check that renarrowAndFetch causes its
+      // result to be discarded.
+      connection.prepare(
+        json: olderResult(
+          anchor: 1000, foundOldest: false,
+          messages: List.generate(100,
+            (i) => eg.streamMessage(id: 900 + i, stream: channel)),
+        ).toJson(),
+        delay: Duration(milliseconds: 500),
+      );
+      unawaited(model.fetchOlder());
+      checkNotifiedOnce();
+
+      // Start the renarrowAndFetch.
+      final newNarrow = ChannelNarrow(channel.streamId);
+      final newAnchor = NumericAnchor(messages[3].id);
+
+      final result = eg.getMessagesResult(
+        anchor: newAnchor,
+        foundOldest: false, foundNewest: false,
+        messages: messages.sublist(3, 5));
+      connection.prepare(json: result.toJson(), delay: Duration(seconds: 1));
+      model.renarrowAndFetch(newNarrow, newAnchor);
+      checkNotifiedOnce();
+      check(model)
+        ..fetched.isFalse()
+        ..narrow.equals(newNarrow)
+        ..anchor.equals(newAnchor)
+        ..messages.isEmpty();
+
+      // Elapse until the fetchOlder is done but renarrowAndFetch is still
+      // pending; check that the list is still empty despite the fetchOlder.
+      async.elapse(Duration(milliseconds: 750));
+      check(model)
+        ..fetched.isFalse()
+        ..narrow.equals(newNarrow)
+        ..messages.isEmpty();
+
+      // Elapse until the renarrowAndFetch completes.
+      async.elapse(Duration(seconds: 250));
+      check(model)
+        ..fetched.isTrue()
+        ..narrow.equals(newNarrow)
+        ..anchor.equals(newAnchor)
+        ..messages.length.equals(2);
+    }));
+  });
+
   group('fetching more', () {
     test('fetchOlder smoke', () async {
       const narrow = CombinedFeedNarrow();
@@ -624,40 +683,6 @@ void main() {
       checkNotified(count: 2);
       check(connection.takeRequests()).single;
     }));
-
-    test('fetchOlder handles servers not understanding includeAnchor', () async {
-      await prepare();
-      await prepareMessages(foundOldest: false,
-        messages: List.generate(100, (i) => eg.streamMessage(id: 1000 + i)));
-
-      // The old behavior is to include the anchor message regardless of includeAnchor.
-      connection.prepare(json: olderResult(
-        anchor: 1000, foundOldest: false, foundAnchor: true,
-        messages: List.generate(101, (i) => eg.streamMessage(id: 900 + i)),
-      ).toJson());
-      await model.fetchOlder();
-      checkNotified(count: 2);
-      check(model)
-        ..busyFetchingMore.isFalse()
-        ..messages.length.equals(200);
-    });
-
-    test('fetchNewer handles servers not understanding includeAnchor', () async {
-      await prepare(anchor: NumericAnchor(1000));
-      await prepareMessages(foundOldest: true, foundNewest: false,
-        messages: List.generate(101, (i) => eg.streamMessage(id: 1000 + i)));
-
-      // The old behavior is to include the anchor message regardless of includeAnchor.
-      connection.prepare(json: newerResult(
-        anchor: 1100, foundNewest: false, foundAnchor: true,
-        messages: List.generate(101, (i) => eg.streamMessage(id: 1100 + i)),
-      ).toJson());
-      await model.fetchNewer();
-      checkNotified(count: 2);
-      check(model)
-        ..busyFetchingMore.isFalse()
-        ..messages.length.equals(201);
-    });
 
     // TODO(#824): move this test
     test('fetchOlder recent senders track all the messages', () async {
@@ -3361,6 +3386,7 @@ extension MessageListMessageItemChecks on Subject<MessageListMessageItem> {
 extension MessageListViewChecks on Subject<MessageListView> {
   Subject<PerAccountStore> get store => has((x) => x.store, 'store');
   Subject<Narrow> get narrow => has((x) => x.narrow, 'narrow');
+  Subject<Anchor> get anchor => has((x) => x.anchor, 'anchor');
   Subject<List<Message>> get messages => has((x) => x.messages, 'messages');
   Subject<List<OutboxMessage>> get outboxMessages => has((x) => x.outboxMessages, 'outboxMessages');
   Subject<int> get middleMessage => has((x) => x.middleMessage, 'middleMessage');

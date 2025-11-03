@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import 'channel_colors.dart';
+import 'store.dart';
 import 'text.dart';
 import 'theme.dart';
 
@@ -12,35 +12,42 @@ class UnreadCountBadge extends StatelessWidget {
   const UnreadCountBadge({
     super.key,
     required this.count,
-    required this.backgroundColor,
+    required this.channelIdForBackground,
     this.bold = false,
   });
 
   final int count;
   final bool bold;
 
-  /// The badge's background color.
+  /// An optional [Subscription.streamId], for a channel-colorized background.
   ///
-  /// Pass a [ChannelColorSwatch] if this badge represents messages in one
-  /// specific stream. The appropriate color from the swatch will be used.
+  /// Useful when this badge represents messages in one specific channel.
   ///
   /// If null, the default neutral background will be used.
-  final Color? backgroundColor;
+  final int? channelIdForBackground;
 
   @override
   Widget build(BuildContext context) {
+    final store = PerAccountStoreWidget.of(context);
     final designVariables = DesignVariables.of(context);
 
-    final effectiveBackgroundColor = switch (backgroundColor) {
-      ChannelColorSwatch(unreadCountBadgeBackground: var color) => color,
-      Color() => backgroundColor,
-      null => designVariables.bgCounterUnread,
-    };
+    final Color textColor;
+    final Color backgroundColor;
+    if (channelIdForBackground != null) {
+      textColor = designVariables.unreadCountBadgeTextForChannel;
+
+      final subscription = store.subscriptions[channelIdForBackground!];
+      final swatch = colorSwatchFor(context, subscription);
+      backgroundColor = swatch.unreadCountBadgeBackground;
+    } else {
+      textColor = designVariables.labelCounterUnread;
+      backgroundColor = designVariables.bgCounterUnread;
+    }
 
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(3),
-        color: effectiveBackgroundColor,
+        color: backgroundColor,
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(4, 0, 4, 1),
@@ -49,9 +56,7 @@ class UnreadCountBadge extends StatelessWidget {
             fontSize: 16,
             height: (18 / 16),
             fontFeatures: const [FontFeature.enable('smcp')], // small caps
-            color: backgroundColor is ChannelColorSwatch
-              ? designVariables.unreadCountBadgeTextForChannel
-              : designVariables.labelCounterUnread,
+            color: textColor,
           ).merge(weightVariableTextStyle(context,
               wght: bold ? 600 : null)),
           count.toString())));

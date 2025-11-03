@@ -68,14 +68,14 @@
   "@actionSheetOptionUnstarMessage": {
     "description": "Label for unstar button on action sheet."
   },
+  "@allChannelsPageTitle": {
+    "description": "Title for the 'All channels' page."
+  },
   "@appVersionUnknownPlaceholder": {
     "description": "Placeholder to show in place of the app version when it is unknown."
   },
   "@channelFeedButtonTooltip": {
     "description": "Tooltip for button to navigate to a given channel's feed"
-  },
-  "@channelsEmptyPlaceholder": {
-    "description": "Centered text on the 'Channels' page saying that there is no content to show."
   },
   "@channelsPageTitle": {
     "description": "Title for the page with a list of subscribed channels."
@@ -103,6 +103,9 @@
   },
   "@composeBoxBannerButtonCancel": {
     "description": "Label text for the 'Cancel' button in the compose-box banner when you are editing a message."
+  },
+  "@composeBoxBannerButtonRefresh": {
+    "description": "Label text for the 'Refresh' button in the compose-box banner when you are viewing an unsubscribed channel."
   },
   "@composeBoxBannerButtonSave": {
     "description": "Label text for the 'Save' button in the compose-box banner when you are editing a message."
@@ -528,9 +531,6 @@
       }
     }
   },
-  "@inboxEmptyPlaceholder": {
-    "description": "Centered text on the 'Inbox' page saying that there is no content to show."
-  },
   "@inboxPageTitle": {
     "description": "Title for the page with unreads."
   },
@@ -681,6 +681,9 @@
   "@mutedUser": {
     "description": "Name for a muted user to display all over the app."
   },
+  "@navButtonAllChannels": {
+    "description": "Title for a nav button that opens the 'All channels' page."
+  },
   "@newDmFabButtonLabel": {
     "description": "Label for the floating action button (FAB) that opens the new DM sheet."
   },
@@ -769,9 +772,6 @@
   "@reactedEmojiSelfUser": {
     "description": "Display name for the user themself, to show on an emoji reaction added by the user."
   },
-  "@recentDmConversationsEmptyPlaceholder": {
-    "description": "Centered text on the 'Direct messages' page saying that there is no content to show."
-  },
   "@recentDmConversationsPageTitle": {
     "description": "Title for the page with a list of DM conversations."
   },
@@ -789,6 +789,12 @@
   },
   "@scrollToBottomTooltip": {
     "description": "Tooltip for button to scroll to bottom."
+  },
+  "@searchMessagesHintText": {
+    "description": "Hint text for the message search text field."
+  },
+  "@searchMessagesPageTitle": {
+    "description": "Page title for the 'Search' message view."
   },
   "@serverUrlValidationErrorEmpty": {
     "description": "Error message when URL is empty"
@@ -980,9 +986,9 @@
   "actionSheetOptionUnmuteTopic": "Riattiva argomento",
   "actionSheetOptionUnresolveTopic": "Segna come irrisolto",
   "actionSheetOptionUnstarMessage": "Messaggio normale",
+  "allChannelsPageTitle": "Titolo per la pagina \"Tutti i canali\".",
   "appVersionUnknownPlaceholder": "(…)",
   "channelFeedButtonTooltip": "Feed del canale",
-  "channelsEmptyPlaceholder": "Non sei ancora iscritto ad alcun canale.",
   "channelsPageTitle": "Canali",
   "chooseAccountButtonAddAnAccount": "Aggiungi un account",
   "chooseAccountPageLogOutButton": "Esci",
@@ -992,6 +998,7 @@
   "composeBoxAttachFromCameraTooltip": "Fai una foto",
   "composeBoxAttachMediaTooltip": "Allega immagini o video",
   "composeBoxBannerButtonCancel": "Annulla",
+  "composeBoxBannerButtonRefresh": "Etichetta il testo per il pulsante \"Aggiorna\" nel banner della casella di composizione quando visualizzi un canale a cui non sei iscritto.",
   "composeBoxBannerButtonSave": "Salva",
   "composeBoxBannerLabelEditMessage": "Modifica messaggio",
   "composeBoxChannelContentHint": "Messaggia {destination}",
@@ -1078,7 +1085,6 @@
   "experimentalFeatureSettingsPageTitle": "Caratteristiche sperimentali",
   "experimentalFeatureSettingsWarning": "Queste opzioni abilitano funzionalità ancora in fase di sviluppo e non ancora pronte. Potrebbero non funzionare e causare problemi in altre aree dell'app.\n\nQueste impostazioni sono pensate per la sperimentazione da parte di chi lavora allo sviluppo di Zulip.",
   "filenameAndSizeInMiB": "{filename}: {size} MiB",
-  "inboxEmptyPlaceholder": "Non ci sono messaggi non letti nella posta in arrivo. Usare i pulsanti sotto per visualizzare il feed combinato o l'elenco dei canali.",
   "inboxPageTitle": "Inbox",
   "initialAnchorSettingDescription": "È possibile scegliere se i feed dei messaggi devono aprirsi al primo messaggio non letto oppure ai messaggi più recenti.",
   "initialAnchorSettingFirstUnreadAlways": "Primo messaggio non letto",
@@ -1123,6 +1129,7 @@
   "messageListGroupYouWithYourself": "Messaggi con te stesso",
   "messageNotSentLabel": "MESSAGGIO NON INVIATO",
   "mutedUser": "Utente silenziato",
+  "navButtonAllChannels": "Titolo per un pulsante di navigazione che apre la pagina \"Tutti i canali\".",
   "newDmFabButtonLabel": "Nuovo MD",
   "newDmSheetComposeButtonLabel": "Componi",
   "newDmSheetNoUsersFound": "Nessun utente trovato",
@@ -1145,13 +1152,14 @@
   "preparingEditMessageContentInput": "Preparazione…",
   "profileButtonSendDirectMessage": "Invia un messaggio diretto",
   "reactedEmojiSelfUser": "Tu",
-  "recentDmConversationsEmptyPlaceholder": "Non ci sono ancora messaggi diretti! Perché non iniziare la conversazione?",
   "recentDmConversationsPageTitle": "Messaggi diretti",
   "recentDmConversationsSectionHeader": "Messaggi diretti",
   "revealButtonLabel": "Mostra messaggio per mittente silenziato",
   "savingMessageEditFailedLabel": "MODIFICA NON SALVATA",
   "savingMessageEditLabel": "SALVATAGGIO MODIFICA…",
   "scrollToBottomTooltip": "Scorri fino in fondo",
+  "searchMessagesHintText": "Testo di suggerimento per il campo di testo di ricerca del messaggio.",
+  "searchMessagesPageTitle": "Titolo della pagina per la visualizzazione del messaggio \"Cerca\".",
   "serverUrlValidationErrorEmpty": "Inserire un URL.",
   "serverUrlValidationErrorInvalidUrl": "Inserire un URL valido.",
   "serverUrlValidationErrorNoUseEmail": "Inserire l'URL del server, non il proprio indirizzo email.",

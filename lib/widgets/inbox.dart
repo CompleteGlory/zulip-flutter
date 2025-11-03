@@ -165,7 +165,8 @@ class _InboxPageState extends State<InboxPageBody> with PerAccountStoreAwareStat
     if (sections.isEmpty) {
       return PageBodyEmptyContentPlaceholder(
         // TODO(#315) add e.g. "You might be interested in recent conversations."
-        message: zulipLocalizations.inboxEmptyPlaceholder);
+        header: zulipLocalizations.inboxEmptyPlaceholderHeader,
+        message: zulipLocalizations.inboxEmptyPlaceholderMessage);
     }
 
     return SafeArea( // horizontal insets
@@ -249,7 +250,9 @@ abstract class _HeaderItem extends StatelessWidget {
   Color collapsedIconColor(BuildContext context);
   Color uncollapsedIconColor(BuildContext context);
   Color uncollapsedBackgroundColor(BuildContext context);
-  Color? unreadCountBadgeBackgroundColor(BuildContext context);
+
+  /// A channel ID, if this represents a channel, else null.
+  int? get channelId;
 
   Future<void> onCollapseButtonTap() async {
     if (!collapsed) {
@@ -307,7 +310,7 @@ abstract class _HeaderItem extends StatelessWidget {
           if (hasMention) const _IconMarker(icon: ZulipIcons.at_sign),
           Padding(padding: const EdgeInsetsDirectional.only(end: 16),
             child: UnreadCountBadge(
-              backgroundColor: unreadCountBadgeBackgroundColor(context),
+              channelIdForBackground: channelId,
               bold: true,
               count: count)),
         ])));
@@ -332,7 +335,7 @@ class _AllDmsHeaderItem extends _HeaderItem {
   @override Color uncollapsedIconColor(context) => DesignVariables.of(context).labelMenuButton;
 
   @override Color uncollapsedBackgroundColor(context) => DesignVariables.of(context).dmHeaderBg;
-  @override Color? unreadCountBadgeBackgroundColor(context) => null;
+  @override int? get channelId => null;
 
   @override Future<void> onCollapseButtonTap() async {
     await super.onCollapseButtonTap();
@@ -429,7 +432,7 @@ class _DmItem extends StatelessWidget {
             const SizedBox(width: 12),
             if (hasMention) const  _IconMarker(icon: ZulipIcons.at_sign),
             Padding(padding: const EdgeInsetsDirectional.only(end: 16),
-              child: UnreadCountBadge(backgroundColor: null,
+              child: UnreadCountBadge(channelIdForBackground: null,
                 count: count)),
           ]))));
   }
@@ -462,8 +465,7 @@ class _StreamHeaderItem extends _HeaderItem with _LongPressable {
     colorSwatchFor(context, subscription).iconOnBarBackground;
   @override Color uncollapsedBackgroundColor(context) =>
     colorSwatchFor(context, subscription).barBackground;
-  @override Color? unreadCountBadgeBackgroundColor(context) =>
-    colorSwatchFor(context, subscription).unreadCountBadgeBackground;
+  @override int? get channelId => subscription.streamId;
 
   @override Future<void> onCollapseButtonTap() async {
     await super.onCollapseButtonTap();
@@ -526,7 +528,6 @@ class _TopicItem extends StatelessWidget {
       :topic, :count, :hasMention, :lastUnreadId) = data;
 
     final store = PerAccountStoreWidget.of(context);
-    final subscription = store.subscriptions[streamId]!;
 
     final designVariables = DesignVariables.of(context);
     final visibilityIcon = iconDataForTopicVisibilityPolicy(
@@ -566,7 +567,7 @@ class _TopicItem extends StatelessWidget {
             if (visibilityIcon != null) _IconMarker(icon: visibilityIcon),
             Padding(padding: const EdgeInsetsDirectional.only(end: 16),
               child: UnreadCountBadge(
-                backgroundColor: colorSwatchFor(context, subscription),
+                channelIdForBackground: streamId,
                 count: count)),
           ]))));
   }

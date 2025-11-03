@@ -137,6 +137,17 @@ abstract class MessageListPageState extends State<MessageListPage> {
   /// The narrow for this page's message list.
   Narrow get narrow;
 
+  /// Resets the [MessageListView] model, triggering an initial fetch.
+  ///
+  /// If [anchor] isn't passed, reuses the anchor from the last initial fetch.
+  ///
+  /// Useful when updates won't arrive through the event system,
+  /// as when showing an unsubscribed channel.
+  /// (New-message events aren't sent for unsubscribed channels.)
+  ///
+  /// Does nothing if [MessageList] has not mounted yet.
+  void refresh([Anchor? anchor]);
+
   /// The [ComposeBoxState] for this [MessageListPage]'s compose box,
   /// if this [MessageListPage] offers a compose box and it has mounted,
   /// else null.
@@ -266,6 +277,14 @@ class MessageListPage extends StatefulWidget {
 class _MessageListPageState extends State<MessageListPage> implements MessageListPageState {
   @override
   late Narrow narrow;
+
+  @override
+  void refresh([Anchor? anchor]) {
+    // TODO If anchor isn't passed, check if there's some onscreen message
+    //   we can anchor to, before defaulting to model.anchor.
+    //   Update the dartdoc on this method with the new behavior.
+    model?.renarrowAndFetch(narrow, anchor ?? model!.anchor);
+  }
 
   @override
   ComposeBoxState? get composeBoxState => _composeBoxKey.currentState;
@@ -639,7 +658,8 @@ class MessageListAppBarTitle extends StatelessWidget {
       case KeywordSearchNarrow():
         assert(!willCenterTitle);
         return _SearchBar(onSubmitted: (narrow) {
-          MessageListPage.ancestorOf(context).model!.renarrowAndFetch(narrow);
+          MessageListPage.ancestorOf(context).model!
+            .renarrowAndFetch(narrow, AnchorCode.newest);
         });
     }
   }
@@ -1012,14 +1032,14 @@ class _MessageListState extends State<MessageList> with PerAccountStoreAwareStat
     if (!model.fetched) return const Center(child: CircularProgressIndicator());
 
     if (model.items.isEmpty && model.haveNewest && model.haveOldest) {
-      final String message;
+      final String header;
       if (widget.narrow is KeywordSearchNarrow) {
-        message = zulipLocalizations.emptyMessageListSearch;
+        header = zulipLocalizations.emptyMessageListSearch;
       } else {
-        message = zulipLocalizations.emptyMessageList;
+        header = zulipLocalizations.emptyMessageList;
       }
 
-      return PageBodyEmptyContentPlaceholder(message: message);
+      return PageBodyEmptyContentPlaceholder(header: header);
     }
 
     // Pad the left and right insets, for small devices in landscape.

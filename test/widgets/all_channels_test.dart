@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:checks/checks.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_checks/flutter_checks.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
 import 'package:zulip/api/model/model.dart';
 import 'package:zulip/model/store.dart';
 import 'package:zulip/widgets/all_channels.dart';
@@ -9,21 +12,27 @@ import 'package:zulip/widgets/app_bar.dart';
 import 'package:zulip/widgets/button.dart';
 import 'package:zulip/widgets/home.dart';
 import 'package:zulip/widgets/icons.dart';
+import 'package:zulip/widgets/message_list.dart';
 import 'package:zulip/widgets/page.dart';
+import 'package:zulip/widgets/remote_settings.dart';
 import 'package:zulip/widgets/theme.dart';
 
+import '../api/fake_api.dart';
 import '../api/model/model_checks.dart';
 import '../flutter_checks.dart';
 import '../model/binding.dart';
 import '../example_data.dart' as eg;
 import '../model/test_store.dart';
+import '../stdlib_checks.dart';
 import 'checks.dart';
+import 'dialog_checks.dart';
 import 'test_app.dart';
 
 void main() {
   TestZulipBinding.ensureInitialized();
 
   late PerAccountStore store;
+  late FakeApiConnection connection;
   late TransitionDurationObserver transitionDurationObserver;
 
   final groupSettingWithSelf = eg.groupSetting(members: [eg.selfUser.userId]);
@@ -40,6 +49,7 @@ void main() {
     );
     await testBinding.globalStore.add(eg.selfAccount, initialSnapshot);
     store = await testBinding.globalStore.perAccount(eg.selfAccount.id);
+    connection = store.connection as FakeApiConnection;
 
     transitionDurationObserver = TransitionDurationObserver();
     await tester.pumpWidget(TestZulipApp(accountId: eg.selfAccount.id,
@@ -194,17 +204,109 @@ void main() {
         check(maybeToggle).isNull();
       }
 
-      check(findInRow(find.byIcon(ZulipIcons.more_horizontal))).findsOne();
+      final touchTargetSize = tester.getSize(findElement);
+      check(touchTargetSize.height).equals(44);
     }
   });
 
-  testWidgets('tapping three-dots button opens channel action sheet', (tester) async {
+  testWidgets('open channel action sheet on long press', (tester) async {
     await setupAllChannelsPage(tester, channels: [eg.stream()]);
 
-    await tester.tap(find.byIcon(ZulipIcons.more_horizontal));
+    await tester.longPress(find.byType(AllChannelsListEntry));
     await tester.pump();
     await transitionDurationObserver.pumpPastTransition(tester);
 
     check(find.byType(BottomSheet)).findsOne();
+  });
+
+  testWidgets('navigate to channel feed on tap', (tester) async {
+    final channel = eg.stream(name: 'some-channel');
+    await setupAllChannelsPage(tester, channels: [channel]);
+
+    connection.prepare(json: eg.newestGetMessagesResult(
+      foundOldest: true, messages: [eg.streamMessage(stream: channel)]).toJson());
+    await tester.tap(find.byType(AllChannelsListEntry));
+    await tester.pump();
+    await transitionDurationObserver.pumpPastTransition(tester);
+
+    check(find.descendant(
+      of: find.byType(MessageListPage),
+      matching: find.text('some-channel')),
+    ).findsOne();
+  });
+
+  testWidgets('use toggle switch to subscribe/unsubscribe', (tester) async {
+    final channel = eg.stream();
+    await setupAllChannelsPage(tester, channels: [channel]);
+
+    await tester.tap(find.byType(Toggle));
+    check(connection.lastRequest).isA<http.Request>()
+      ..method.equals('POST')
+      ..url.path.equals('/api/v1/users/me/subscriptions')
+      ..bodyFields.deepEquals({
+        'subscriptions': jsonEncode([{'name': channel.name}]),
+      });
+
+    await store.addSubscription(eg.subscription(channel));
+    await tester.pump(); // Toggle changes state
+
+    await tester.tap(find.byType(Toggle));
+    check(connection.lastRequest).isA<http.Request>()
+      ..method.equals('DELETE')
+      ..url.path.equals('/api/v1/users/me/subscriptions')
+      ..bodyFields.deepEquals({
+        'subscriptions': jsonEncode([channel.name]),
+      });
+  });
+
+  testWidgets('Toggle "off" to unsubscribe, public channel', (tester) async {
+    final channel = eg.stream(inviteOnly: false);
+    final subscription = eg.subscription(channel);
+
+    await setupAllChannelsPage(tester, channels: [subscription]);
+
+    connection.prepare(json: {});
+    await tester.tap(find.byType(Toggle));
+    await tester.pump(Duration.zero);
+    checkNoDialog(tester);
+    check(connection.lastRequest).isA<http.Request>()
+      ..method.equals('DELETE')
+      ..url.path.equals('/api/v1/users/me/subscriptions')
+      ..bodyFields.deepEquals({
+        'subscriptions': jsonEncode([channel.name]),
+      });
+  });
+
+  testWidgets('Toggle "off" to unsubscribe, but without resubscribe permission', (tester) async {
+    final channel = eg.stream(
+      inviteOnly: true, canSubscribeGroup: eg.groupSetting(members: []));
+    final subscription = eg.subscription(channel);
+
+    (Widget, Widget) checkConfirmDialog() => checkSuggestedActionDialog(tester,
+      expectedTitle: 'Unsubscribe from #${channel.name}?',
+      expectedMessage: 'Once you leave this channel, you will not be able to rejoin.',
+      expectDestructiveActionButton: true,
+      expectedActionButtonText: 'Unsubscribe');
+
+    await setupAllChannelsPage(tester, channels: [subscription]);
+
+    await tester.tap(find.byType(Toggle));
+    await tester.pump();
+    final (_, cancelButton) = checkConfirmDialog();
+    await tester.tap(find.byWidget(cancelButton));
+    await tester.pumpAndSettle();
+    check(connection.lastRequest).isNull();
+    await tester.pump(RemoteSettingBuilder.localEchoIdleTimeout);
+
+    await tester.tap(find.byType(Toggle));
+    await tester.pump();
+    final (unsubscribeButton, _) = checkConfirmDialog();
+    await tester.tap(find.byWidget(unsubscribeButton));
+    check(connection.lastRequest).isA<http.Request>()
+      ..method.equals('DELETE')
+      ..url.path.equals('/api/v1/users/me/subscriptions')
+      ..bodyFields.deepEquals({
+        'subscriptions': jsonEncode([channel.name]),
+      });
   });
 }

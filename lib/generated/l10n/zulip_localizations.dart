@@ -7,8 +7,12 @@ import 'package:intl/intl.dart' as intl;
 
 import 'zulip_localizations_ar.dart';
 import 'zulip_localizations_de.dart';
+import 'zulip_localizations_el.dart';
 import 'zulip_localizations_en.dart';
+import 'zulip_localizations_es.dart';
 import 'zulip_localizations_fr.dart';
+import 'zulip_localizations_he.dart';
+import 'zulip_localizations_hu.dart';
 import 'zulip_localizations_it.dart';
 import 'zulip_localizations_ja.dart';
 import 'zulip_localizations_nb.dart';
@@ -108,8 +112,12 @@ abstract class ZulipLocalizations {
     Locale('en'),
     Locale('ar'),
     Locale('de'),
+    Locale('el'),
     Locale('en', 'GB'),
+    Locale('es'),
     Locale('fr'),
+    Locale('he'),
+    Locale('hu'),
     Locale('it'),
     Locale('ja'),
     Locale('nb'),
@@ -255,7 +263,7 @@ abstract class ZulipLocalizations {
   ///
   /// In en, this message translates to:
   /// **'There are no channels you can view in this organization.'**
-  String get allChannelsEmptyPlaceholder;
+  String get allChannelsEmptyPlaceholderHeader;
 
   /// Label for button in profile screen to navigate to DMs with the shown user.
   ///
@@ -593,6 +601,12 @@ abstract class ZulipLocalizations {
   /// **'Could not fetch message source.'**
   String get errorCouldNotFetchMessageSource;
 
+  /// Error title on failure in opening a file someone previously uploaded to Zulip
+  ///
+  /// In en, this message translates to:
+  /// **'Could not access uploaded file'**
+  String get errorCouldNotAccessUploadedFileTitle;
+
   /// Error message when copying the text of a message to the user's system clipboard failed.
   ///
   /// In en, this message translates to:
@@ -811,6 +825,24 @@ abstract class ZulipLocalizations {
   /// **'You do not have permission to post in this channel.'**
   String get errorBannerCannotPostInChannelLabel;
 
+  /// Label text for a compose-box banner when you are viewing an unsubscribed channel in which you do not have permission to send messages.
+  ///
+  /// In en, this message translates to:
+  /// **'New messages will not appear automatically.'**
+  String get composeBoxBannerLabelUnsubscribedWhenCannotSend;
+
+  /// Label text for the 'Refresh' button in the compose-box banner when you are viewing an unsubscribed channel.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get composeBoxBannerButtonRefresh;
+
+  /// Label text for the 'Subscribe' button in the compose-box banner when you are viewing an unsubscribed channel.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribe'**
+  String get composeBoxBannerButtonSubscribe;
+
   /// Label text for the compose-box banner when you are editing a message.
   ///
   /// In en, this message translates to:
@@ -952,7 +984,7 @@ abstract class ZulipLocalizations {
   /// Hint text for content input when sending a message to yourself.
   ///
   /// In en, this message translates to:
-  /// **'Jot down something'**
+  /// **'Write yourself a note'**
   String get composeBoxSelfDmContentHint;
 
   /// Hint text for content input when sending a message to a channel.
@@ -1588,8 +1620,14 @@ abstract class ZulipLocalizations {
   /// Centered text on the 'Inbox' page saying that there is no content to show.
   ///
   /// In en, this message translates to:
-  /// **'There are no unread messages in your inbox. Use the buttons below to view the combined feed or list of channels.'**
-  String get inboxEmptyPlaceholder;
+  /// **'There are no unread messages in your inbox.'**
+  String get inboxEmptyPlaceholderHeader;
+
+  /// Additional centered text on the 'Inbox' page saying that there is no content to show.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the buttons below to view the combined feed or list of channels.'**
+  String get inboxEmptyPlaceholderMessage;
 
   /// Title for the page with a list of DM conversations.
   ///
@@ -1606,8 +1644,14 @@ abstract class ZulipLocalizations {
   /// Centered text on the 'Direct messages' page saying that there is no content to show.
   ///
   /// In en, this message translates to:
-  /// **'You have no direct messages yet! Why not start the conversation?'**
-  String get recentDmConversationsEmptyPlaceholder;
+  /// **'You have no direct messages yet!'**
+  String get recentDmConversationsEmptyPlaceholderHeader;
+
+  /// Additional centered text on the 'Direct messages' page saying that there is no content to show.
+  ///
+  /// In en, this message translates to:
+  /// **'Why not start a conversation?'**
+  String get recentDmConversationsEmptyPlaceholderMessage;
 
   /// Page title for the 'Combined feed' message view.
   ///
@@ -1637,15 +1681,13 @@ abstract class ZulipLocalizations {
   ///
   /// In en, this message translates to:
   /// **'You’re not subscribed to any channels yet.'**
-  String get channelsEmptyPlaceholder;
+  String get channelsEmptyPlaceholderHeader;
 
   /// Centered text on the 'Channels' page saying that there is no content to show, with a link to 'All channels'.
   ///
   /// In en, this message translates to:
-  /// **'You’re not subscribed to any channels yet. Try going to <z-link>{allChannelsPageTitle}</z-link> and joining some of them.'**
-  String channelsEmptyPlaceholderWithAllChannelsLink(
-    String allChannelsPageTitle,
-  );
+  /// **'Try going to <z-link>{allChannelsPageTitle}</z-link> and joining some of them.'**
+  String channelsEmptyPlaceholderMessage(String allChannelsPageTitle);
 
   /// Title for the page about sharing content received from other apps.
   ///
@@ -2035,8 +2077,12 @@ class _ZulipLocalizationsDelegate
   bool isSupported(Locale locale) => <String>[
     'ar',
     'de',
+    'el',
     'en',
+    'es',
     'fr',
+    'he',
+    'hu',
     'it',
     'ja',
     'nb',
@@ -2079,10 +2125,18 @@ ZulipLocalizations lookupZulipLocalizations(Locale locale) {
       return ZulipLocalizationsAr();
     case 'de':
       return ZulipLocalizationsDe();
+    case 'el':
+      return ZulipLocalizationsEl();
     case 'en':
       return ZulipLocalizationsEn();
+    case 'es':
+      return ZulipLocalizationsEs();
     case 'fr':
       return ZulipLocalizationsFr();
+    case 'he':
+      return ZulipLocalizationsHe();
+    case 'hu':
+      return ZulipLocalizationsHu();
     case 'it':
       return ZulipLocalizationsIt();
     case 'ja':

@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:zulip/api/core.dart';
 import 'package:zulip/api/model/initial_snapshot.dart';
 import 'package:zulip/api/model/model.dart';
+import 'package:zulip/api/route/messages.dart';
 import 'package:zulip/model/content.dart';
 import 'package:zulip/model/narrow.dart';
 import 'package:zulip/model/settings.dart';
@@ -21,6 +22,7 @@ import 'package:zulip/widgets/page.dart';
 import 'package:zulip/widgets/store.dart';
 import 'package:zulip/widgets/text.dart';
 
+import '../api/fake_api.dart';
 import '../example_data.dart' as eg;
 import '../flutter_checks.dart';
 import '../model/binding.dart';
@@ -311,7 +313,7 @@ void main() {
           ..status.equals(expected ? AnimationStatus.completed : AnimationStatus.dismissed);
       }
 
-      const example = ContentExample.spoilerHeaderHasImage;
+      const example = ContentExample.spoilerHeaderHasImagePreview;
 
       testWidgets('tap image', (tester) async {
         final pushedRoutes = await prepare(tester, example.html);
@@ -357,7 +359,7 @@ void main() {
 
   testContentSmoke(ContentExample.quotation);
 
-  group('MessageImage, MessageImageList', () {
+  group('MessageImagePreview, MessageImagePreviewList', () {
     Future<void> prepare(WidgetTester tester, String html) async {
       await prepareContent(tester,
         // Message is needed for an image's lightbox.
@@ -368,9 +370,9 @@ void main() {
     }
 
     testWidgets('single image', (tester) async {
-      const example = ContentExample.imageSingle;
+      const example = ContentExample.imagePreviewSingle;
       await prepare(tester, example.html);
-      final expectedImages = (example.expectedNodes[0] as ImageNodeList).images;
+      final expectedImages = (example.expectedNodes[0] as ImagePreviewNodeList).imagePreviews;
       final images = tester.widgetList<RealmContentNetworkImage>(
         find.byType(RealmContentNetworkImage));
       check(images.map((i) => i.src.toString()).toList())
@@ -378,9 +380,9 @@ void main() {
     });
 
     testWidgets('single image no thumbnail', (tester) async {
-      const example = ContentExample.imageSingleNoThumbnail;
+      const example = ContentExample.imagePreviewSingleNoThumbnail;
       await prepare(tester, example.html);
-      final expectedImages = (example.expectedNodes[0] as ImageNodeList).images;
+      final expectedImages = (example.expectedNodes[0] as ImagePreviewNodeList).imagePreviews;
       final images = tester.widgetList<RealmContentNetworkImage>(
         find.byType(RealmContentNetworkImage));
       check(images.map((i) => i.src.toString()).toList())
@@ -388,27 +390,28 @@ void main() {
     });
 
     testWidgets('single image loading placeholder', (tester) async {
-      const example = ContentExample.imageSingleLoadingPlaceholder;
+      const example = ContentExample.imagePreviewSingleLoadingPlaceholder;
       await prepare(tester, example.html);
       await tester.ensureVisible(find.byType(CupertinoActivityIndicator));
     });
 
     testWidgets('image with invalid src URL', (tester) async {
-      const example = ContentExample.imageInvalidUrl;
+      const example = ContentExample.imagePreviewInvalidUrl;
       await prepare(tester, example.html);
       // The image indeed has an invalid URL.
-      final expectedImages = (example.expectedNodes[0] as ImageNodeList).images;
+      final expectedImages = (example.expectedNodes[0] as ImagePreviewNodeList).imagePreviews;
       check(() => Uri.parse(expectedImages.single.srcUrl)).throws<void>();
       check(tryResolveUrl(eg.realmUrl, expectedImages.single.srcUrl)).isNull();
-      // The MessageImage has shown up, but it doesn't attempt a RealmContentNetworkImage.
-      check(tester.widgetList(find.byType(MessageImage))).isNotEmpty();
+      // The MessageImagePreview has shown up,
+      // but it doesn't attempt a RealmContentNetworkImage.
+      check(tester.widgetList(find.byType(MessageImagePreview))).isNotEmpty();
       check(tester.widgetList(find.byType(RealmContentNetworkImage))).isEmpty();
     });
 
     testWidgets('multiple images', (tester) async {
-      const example = ContentExample.imageCluster;
+      const example = ContentExample.imagePreviewCluster;
       await prepare(tester, example.html);
-      final expectedImages = (example.expectedNodes[1] as ImageNodeList).images;
+      final expectedImages = (example.expectedNodes[1] as ImagePreviewNodeList).imagePreviews;
       final images = tester.widgetList<RealmContentNetworkImage>(
         find.byType(RealmContentNetworkImage));
       check(images.map((i) => i.src.toString()).toList())
@@ -416,9 +419,9 @@ void main() {
     });
 
     testWidgets('multiple images no thumbnails', (tester) async {
-      const example = ContentExample.imageClusterNoThumbnails;
+      const example = ContentExample.imagePreviewClusterNoThumbnails;
       await prepare(tester, example.html);
-      final expectedImages = (example.expectedNodes[1] as ImageNodeList).images;
+      final expectedImages = (example.expectedNodes[1] as ImagePreviewNodeList).imagePreviews;
       final images = tester.widgetList<RealmContentNetworkImage>(
         find.byType(RealmContentNetworkImage));
       check(images.map((i) => i.src.toString()).toList())
@@ -426,9 +429,9 @@ void main() {
     });
 
     testWidgets('content after image cluster', (tester) async {
-      const example = ContentExample.imageClusterThenContent;
+      const example = ContentExample.imagePreviewClusterThenContent;
       await prepare(tester, example.html);
-      final expectedImages = (example.expectedNodes[1] as ImageNodeList).images;
+      final expectedImages = (example.expectedNodes[1] as ImagePreviewNodeList).imagePreviews;
       final images = tester.widgetList<RealmContentNetworkImage>(
         find.byType(RealmContentNetworkImage));
       check(images.map((i) => i.src.toString()).toList())
@@ -436,10 +439,10 @@ void main() {
     });
 
     testWidgets('multiple clusters of images', (tester) async {
-      const example = ContentExample.imageMultipleClusters;
+      const example = ContentExample.imagePreviewMultipleClusters;
       await prepare(tester, example.html);
-      final expectedImages = (example.expectedNodes[1] as ImageNodeList).images
-        + (example.expectedNodes[4] as ImageNodeList).images;
+      final expectedImages = (example.expectedNodes[1] as ImagePreviewNodeList).imagePreviews
+        + (example.expectedNodes[4] as ImagePreviewNodeList).imagePreviews;
       final images = tester.widgetList<RealmContentNetworkImage>(
         find.byType(RealmContentNetworkImage));
       check(images.map((i) => i.src.toString()).toList())
@@ -447,10 +450,10 @@ void main() {
     });
 
     testWidgets('image as immediate child in implicit paragraph', (tester) async {
-      const example = ContentExample.imageInImplicitParagraph;
+      const example = ContentExample.imagePreviewInImplicitParagraph;
       await prepare(tester, example.html);
       final expectedImages = ((example.expectedNodes[0] as ListNode)
-        .items[0][0] as ImageNodeList).images;
+        .items[0][0] as ImagePreviewNodeList).imagePreviews;
       final images = tester.widgetList<RealmContentNetworkImage>(
         find.byType(RealmContentNetworkImage));
       check(images.map((i) => i.src.toString()).toList())
@@ -458,10 +461,10 @@ void main() {
     });
 
     testWidgets('image cluster in implicit paragraph', (tester) async {
-      const example = ContentExample.imageClusterInImplicitParagraph;
+      const example = ContentExample.imagePreviewClusterInImplicitParagraph;
       await prepare(tester, example.html);
       final expectedImages = ((example.expectedNodes[0] as ListNode)
-        .items[0][1] as ImageNodeList).images;
+        .items[0][1] as ImagePreviewNodeList).imagePreviews;
       final images = tester.widgetList<RealmContentNetworkImage>(
         find.byType(RealmContentNetworkImage));
       check(images.map((i) => i.src.toString()).toList())
@@ -944,6 +947,9 @@ void main() {
   });
 
   group('LinkNode on internal links', () {
+    late PerAccountStore store;
+    late FakeApiConnection connection;
+
     Future<List<Route<dynamic>>> prepare(WidgetTester tester, String html) async {
       final pushedRoutes = <Route<dynamic>>[];
       final testNavObserver = TestNavigatorObserver()
@@ -959,12 +965,13 @@ void main() {
       assert(pushedRoutes.length == 1);
       pushedRoutes.removeLast();
 
-      final store = await testBinding.globalStore.perAccount(eg.selfAccount.id);
+      store = await testBinding.globalStore.perAccount(eg.selfAccount.id);
+      connection = store.connection as FakeApiConnection;
       await store.addStream(eg.stream(name: 'stream'));
       return pushedRoutes;
     }
 
-    testWidgets('valid internal links are navigated to within app', (tester) async {
+    testWidgets('narrow links are navigated to within app', (tester) async {
       final pushedRoutes = await prepare(tester,
         '<p><a href="/#narrow/stream/1-check">stream</a></p>');
 
@@ -975,6 +982,22 @@ void main() {
     });
 
     // TODO(#1570): test links with /near/ go to the specific message
+
+    testWidgets('uploaded-file links are opened with temporary authed URL', (tester) async {
+      final pushedRoutes = await prepare(tester,
+        '<p><a href="/user_uploads/123/ab/paper.pdf">paper.pdf</a></p>');
+
+      final tempUrlString = '/temp/s3kr1t-auth-token/paper.pdf';
+      final expectedUrl = eg.realmUrl.resolve(tempUrlString);
+
+      connection.prepare(json: GetFileTemporaryUrlResult(
+        url: tempUrlString).toJson());
+      await tapText(tester, find.text('paper.pdf'));
+      await tester.pump(Duration.zero);
+      check(testBinding.takeLaunchUrlCalls())
+        .single.equals((url: expectedUrl, mode: LaunchMode.inAppBrowserView));
+      check(pushedRoutes).isEmpty();
+    });
 
     testWidgets('invalid internal links are opened in browser', (tester) async {
       // Link is invalid due to `topic` operator missing an operand.
@@ -1190,10 +1213,14 @@ void main() {
     }
 
     testWidgets('tapping on audio link opens it in browser', (tester) async {
-      final url = eg.realmUrl.resolve('/user_uploads/2/f2/a_WnijOXIeRnI6OSxo9F6gZM/crab-rave.mp3');
       await prepare(tester, ContentExample.audioInline.html);
+      final store = await testBinding.globalStore.perAccount(eg.selfAccount.id);
+      final connection = store.connection as FakeApiConnection;
 
+      final url = eg.realmUrl.resolve('/temp/token/crab-rave.mp3');
+      connection.prepare(json: GetFileTemporaryUrlResult(url: url.path).toJson());
       await tapText(tester, find.text('crab-rave.mp3'));
+      await tester.pump(Duration.zero);
 
       final expectedLaunchMode = defaultTargetPlatform == TargetPlatform.iOS ?
         LaunchMode.externalApplication : LaunchMode.inAppBrowserView;

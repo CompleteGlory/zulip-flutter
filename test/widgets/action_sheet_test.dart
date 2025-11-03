@@ -38,6 +38,7 @@ import 'package:zulip/widgets/topic_list.dart';
 import 'package:zulip/widgets/user.dart';
 import '../api/fake_api.dart';
 
+import '../api/model/model_checks.dart';
 import '../example_data.dart' as eg;
 import '../flutter_checks.dart';
 import '../model/binding.dart';
@@ -255,19 +256,21 @@ void main() {
       await tester.pump(const Duration(milliseconds: 250));
     }
 
-    Future<void> showFromTopicListAppBar(WidgetTester tester) async {
+    Future<void> showFromTopicListAppBar(WidgetTester tester, {int? streamId}) async {
+      streamId ??= someChannel.streamId;
       final transitionDurationObserver = TransitionDurationObserver();
 
       connection.prepare(json: GetStreamTopicsResult(topics: []).toJson());
       await tester.pumpWidget(TestZulipApp(
         navigatorObservers: [transitionDurationObserver],
         accountId: eg.selfAccount.id,
-        child: TopicListPage(streamId: someChannel.streamId)));
+        child: TopicListPage(streamId: streamId)));
       await tester.pump();
 
+      final titleText = store.streams[streamId]?.name ?? '(unknown channel)';
       await tester.longPress(find.descendant(
         of: find.byType(ZulipAppBar),
-        matching: find.text(someChannel.name)));
+        matching: find.text(titleText)));
       await transitionDurationObserver.pumpPastTransition(tester);
     }
 
@@ -289,6 +292,61 @@ void main() {
         checkButton('Mark channel as read');
         checkButton('Copy link to channel');
       }
+
+      group('header', () {
+        final findHeader = find.descendant(
+          of: actionSheetFinder,
+          matching: find.byType(BottomSheetHeader));
+
+        Finder findInHeader(Finder finder) =>
+          find.descendant(of: findHeader, matching: finder);
+
+        testWidgets('public channel', (tester) async {
+          await prepare();
+          check(store.streams[someChannel.streamId]).isNotNull()
+            ..inviteOnly.isFalse()..isWebPublic.isFalse();
+          await showFromInbox(tester);
+          check(findInHeader(find.byIcon(ZulipIcons.hash_sign))).findsOne();
+          check(findInHeader(find.textContaining(someChannel.name))).findsOne();
+        });
+
+        testWidgets('web-public channel', (tester) async {
+          await prepare();
+          await store.handleEvent(ChannelUpdateEvent(id: 1,
+            streamId: someChannel.streamId,
+            name: someChannel.name,
+            property: null, value: null,
+            // (Ideally we'd use `property` and `value` but I'm not sure if
+            // modern servers actually do that or if they still use this
+            // separate field.)
+            isWebPublic: true));
+          check(store.streams[someChannel.streamId]).isNotNull()
+            ..inviteOnly.isFalse()..isWebPublic.isTrue();
+          await showFromInbox(tester);
+          check(findInHeader(find.byIcon(ZulipIcons.globe))).findsOne();
+          check(findInHeader(find.textContaining(someChannel.name))).findsOne();
+        });
+
+        testWidgets('private channel', (tester) async {
+          await prepare();
+          await store.handleEvent(eg.channelUpdateEvent(someChannel,
+            property: ChannelPropertyName.inviteOnly, value: true));
+          check(store.streams[someChannel.streamId]).isNotNull()
+            ..inviteOnly.isTrue()..isWebPublic.isFalse();
+          await showFromInbox(tester);
+          check(findInHeader(find.byIcon(ZulipIcons.lock))).findsOne();
+          check(findInHeader(find.textContaining(someChannel.name))).findsOne();
+        });
+
+        testWidgets('unknown channel', (tester) async {
+          await prepare();
+          await store.handleEvent(ChannelDeleteEvent(id: 1, streams: [someChannel]));
+          check(store.streams[someChannel.streamId]).isNull();
+          await showFromTopicListAppBar(tester);
+          check(findInHeader(find.byType(Icon))).findsNothing();
+          check(findInHeader(find.textContaining('(unknown channel)'))).findsOne();
+        });
+      });
 
       testWidgets('show from inbox', (tester) async {
         await prepare();
@@ -573,9 +631,15 @@ void main() {
 
         connection.prepare(json: {});
         await tapButton(tester);
-        await tester.pump(Duration.zero);
+        await tester.pump();
 
-        checkNoDialog(tester);
+        final (unsubscribeButton, cancelButton) = checkSuggestedActionDialog(tester,
+          expectedTitle: 'Unsubscribe from #${channel.name}?',
+          expectDestructiveActionButton: false,
+          expectedActionButtonText: 'Unsubscribe');
+        await tester.tap(find.byWidget(unsubscribeButton));
+        await tester.pump();
+        await tester.pump(Duration.zero);
 
         check(connection.lastRequest).isA<http.Request>()
           ..method.equals('DELETE')
@@ -599,7 +663,7 @@ void main() {
         await tester.pump();
 
         final (unsubscribeButton, cancelButton) = checkSuggestedActionDialog(tester,
-          expectedTitle: 'Unsubscribe from ${channel.name}?',
+          expectedTitle: 'Unsubscribe from #${channel.name}?',
           expectedMessage: 'Once you leave this channel, you will not be able to rejoin.',
           expectDestructiveActionButton: true,
           expectedActionButtonText: 'Unsubscribe');
@@ -740,6 +804,38 @@ void main() {
         checkButton('Mark as resolved');
         checkButton('Copy link to topic');
       }
+
+      group('header', () {
+        final findHeader = find.descendant(
+          of: actionSheetFinder,
+          matching: find.byType(BottomSheetHeader));
+
+        Finder findInHeader(Finder finder) =>
+          find.descendant(of: findHeader, matching: finder);
+
+        testWidgets('with topic', (tester) async {
+          await prepare();
+          check(store.streams[someChannel.streamId]).isNotNull()
+            ..inviteOnly.isFalse()..isWebPublic.isFalse();
+          await showFromAppBar(tester);
+          check(findInHeader(find.byIcon(ZulipIcons.hash_sign))).findsOne();
+          check(findInHeader(find.textContaining(someChannel.name))).findsOne();
+          check(findInHeader(find.textContaining(someTopic))).findsOne();
+        });
+
+        testWidgets('without topic (general chat)', (tester) async {
+          await prepare(topic: '');
+          check(store.streams[someChannel.streamId]).isNotNull()
+            ..inviteOnly.isFalse()..isWebPublic.isFalse();
+          final message = eg.streamMessage(
+            stream: someChannel, topic: '', sender: eg.otherUser);
+          await showFromAppBar(tester, messages: [message], topic: eg.t(''));
+          check(findInHeader(find.byIcon(ZulipIcons.hash_sign))).findsOne();
+          check(findInHeader(find.textContaining(someChannel.name))).findsOne();
+          check(findInHeader(find.textContaining(store.realmEmptyTopicDisplayName)))
+            .findsOne();
+        });
+      });
 
       testWidgets('show from inbox; message in Unreads but not in MessageStore', (tester) async {
         await prepare(unreadMsgs: eg.unreadMsgs(count: 1,
@@ -2196,8 +2292,6 @@ void main() {
         }
 
         testVisibility(true);
-        // TODO(server-6) limit 0 not expected on 6.0+
-        testVisibility(true, limit: 0);
         testVisibility(true, limit: 600);
         testVisibility(true, narrow: ChannelNarrow(1));
 
