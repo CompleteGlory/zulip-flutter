@@ -6,6 +6,7 @@ import 'log.dart';
 import 'model/binding.dart';
 import 'notifications/receive.dart';
 import 'widgets/app.dart';
+import 'widgets/emoji.dart';
 import 'widgets/share.dart';
 
 // This library defines the Dart entrypoint function for the
@@ -25,6 +26,10 @@ void main() {
 void mainInit() {
   assert(() {
     debugLogEnabled = true;
+    // This branch exists to exercise the text-emoji fallback that an image
+    // emoji uses when its image fails to load, so that the two cases can be
+    // compared side by side.  Set to false for the ordinary case.
+    debugSimulateEmojiImageFailure = true;
     return true;
   }());
   LicenseRegistry.addLicense(additionalLicenses);

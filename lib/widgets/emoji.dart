@@ -5,6 +5,12 @@ import '../api/model/model.dart';
 import '../model/emoji.dart';
 import 'image.dart';
 
+/// Whether to simulate a load failure for every image emoji,
+/// to exercise the text-emoji fallback (see [EmojiImagePlaceholderStyle.text]).
+///
+/// Only ever true in debug builds; see [mainInit].
+bool debugSimulateEmojiImageFailure = false;
+
 /// A widget showing an emoji.
 class EmojiWidget extends StatelessWidget {
   const EmojiWidget({
@@ -225,6 +231,12 @@ class ImageEmojiWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = textScaler.scale(this.size);
+
+    final errorBuilder = this.errorBuilder;
+    if (debugSimulateEmojiImageFailure && errorBuilder != null) {
+      return errorBuilder(context,
+        StateError('simulated image emoji load failure'), StackTrace.current);
+    }
 
     final resolvedUrl = animationMode.shouldAnimate(context)
       ? emojiDisplay.resolvedUrl
